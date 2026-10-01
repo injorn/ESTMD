@@ -20,11 +20,12 @@ export default async function RolesPage() {
       <div>
         <h1 className="text-xl font-semibold">บทบาท, อัตรา และขอบเขตการประเมิน</h1>
         <p className="mt-1 text-sm text-muted">
-          ค่าทั้งหมดมาจากชีต “ตารางบทบาท” ใน {STANDARD.source} — แก้ที่นี่ได้
+          บทบาทมาตรฐานมาจากชีต “ตารางบทบาท” ใน {STANDARD.source} — แก้ที่นี่ได้
           แต่จะถูกตั้งกลับตามไฟล์เมื่อ seed ใหม่ ถ้าต้องการแก้ถาวรให้แก้ในไฟล์
-          Excel แล้วรัน <code className="font-mono text-xs">npm run matrix:extract</code>
+          Excel แล้วรัน <code className="font-mono text-xs">npm run matrix:extract</code> ส่วนบทบาทเพิ่มเติมจากใบประเมินเก่าเก็บอัตราที่แก้ไว้เมื่อ seed ใหม่
         </p>
         <ul className="mt-3 space-y-1 rounded-md bg-brand-soft/50 px-3 py-2 text-sm">
+          <li>บทบาทรวมและทีมเฉพาะทางจากใบประเมินเก่าเริ่มอัตรา0 ให้ระบุอัตราของโครงการ; กลุ่มงาน SAP / Vendor / Migration ใช้แรงงานที่กรอกแทนขอบเขต phase</li>
           <li>
             <span className="font-medium">ขอบเขต item</span> — MD มาจากเมทริกซ์
             รายบรรทัดที่ key (bottom-up) เป็นค่าเริ่มต้นของทุกบทบาท

@@ -4,6 +4,7 @@ import ExcelJS from 'exceljs'
 
 import { STANDARD } from './standard'
 import type { Summary } from './summary'
+import { profileLabel } from './delivery-profiles'
 
 /**
  * Builds the estimation workbook in the layout of PTT-PSSR-Online_Manday.xlsx
@@ -12,14 +13,15 @@ import type { Summary } from './summary'
  *   row 1        project name
  *   row 2        duration, then the resource level per role column (Of1 / Sr1)
  *   rows 3-4     header: Phase | Details | Due Date Plan | Deliverables | roles
- *   rows 5..n    one row per line item, grouped and merged by phase in col A
+ *   rows 5..n    one row per estimate item, grouped and merged by phase in col A
  *   total row    SUM() per role column
  *   rate row     rate per man-day
  *   cost row     manday x rate
  *   grand total  sum of the cost row
  *
- * Plus a "Questionnaire" sheet with the survey as answered (when the project
- * used one) and a "Basis of Estimate" sheet with the assumptions.
+ * Questionnaire answers without a saved line item are included through the
+ * shared summary model. The workbook also keeps a "Questionnaire" sheet with
+ * the survey as answered and a "Basis of Estimate" sheet with assumptions.
  */
 const HEADERS = ['Phase', 'Details', 'Due Date Plan', 'Deliverables'] as const
 const FIRST_ROLE_COL = HEADERS.length + 1 // column E
@@ -106,6 +108,7 @@ export async function buildWorkbook(summary: Summary) {
 
   let rowIndex = 5
   const phaseMerges: [number, number][] = []
+  const nonBillableCells = new Map<number, string[]>()
 
   for (const phase of summary.phases) {
     if (phase.items.length === 0) continue
@@ -126,6 +129,11 @@ export async function buildWorkbook(summary: Summary) {
         cell.value = value || null
         cell.numFmt = '0.##'
         cell.alignment = { horizontal: 'center' }
+        if (value && !(item.billableByRole.get(role.id) ?? 0)) {
+          const refs = nonBillableCells.get(role.id) ?? []
+          refs.push(cell.address)
+          nonBillableCells.set(role.id, refs)
+        }
       })
 
       for (let c = 1; c <= lastCol; c++) {
@@ -213,7 +221,9 @@ export async function buildWorkbook(summary: Summary) {
     const letter = ws.getColumn(col).letter
     const cell = costRow.getCell(col)
     cell.value = {
-      formula: `${letter}${totalRowIndex}*${letter}${rateRowIndex}`,
+      formula: nonBillableCells.has(role.id)
+        ? `(${letter}${totalRowIndex}-SUM(${nonBillableCells.get(role.id)!.join(',')}))*${letter}${rateRowIndex}`
+        : `${letter}${totalRowIndex}*${letter}${rateRowIndex}`,
       result: role.cost,
     }
     cell.numFmt = '#,##0'
@@ -493,6 +503,10 @@ export async function buildWorkbook(summary: Summary) {
     ],
     ['จำนวนรายการ', summary.itemCount],
     ['รวม Man-day', summary.totalManday],
+    ['MD ที่คิดเงิน', summary.billableManday],
+    ['ฐานการประเมิน', 'Baseline ก่อนปรับงบ; Commercial และ Actual อยู่ใน Effort Evidence แยกจากยอดประเมิน'],
+    ['รูปแบบการส่งมอบ', summary.phases.map(p => `${p.name}: ${profileLabel(p.deliveryProfile)}`).join('\n')],
+    ['รายการที่ควรทบทวน', summary.warnings.join('\n') || 'ไม่มี'],
     ['Developer Man-day (ฐานคิดสัดส่วน)', summary.devTotal],
     [
       'สัดส่วนต่อ Developer',
@@ -540,6 +554,34 @@ export async function buildWorkbook(summary: Summary) {
     row.getCell(1).alignment = { vertical: 'top' }
     row.getCell(2).alignment = { vertical: 'top', wrapText: true }
   }
+
+  const evidence = wb.addWorksheet('Effort Evidence', { views: [{ state: 'frozen', ySplit: 1 }] })
+  evidence.columns = [
+    { header: 'Phase', width: 24 }, { header: 'Delivery profile', width: 26 },
+    { header: 'Details', width: 45 }, { header: 'Activity', width: 30 },
+    { header: 'Level', width: 8 }, { header: 'Qty', width: 10 }, { header: 'Unit', width: 20 },
+    { header: 'Role', width: 24 }, { header: 'Baseline MD', width: 16 },
+    { header: 'Commercial MD', width: 18 }, { header: 'Actual MD', width: 16 },
+    { header: 'Billable', width: 12 }, { header: 'Source reference', width: 45 },
+    { header: 'Baseline confirmed', width: 20 }, { header: 'Complexity facts', width: 45 },
+  ]
+  evidence.getRow(1).font = { bold: true }
+  for (const phase of summary.phases) for (const item of phase.items) for (const role of roles) {
+    evidence.addRow([phase.name, profileLabel(phase.deliveryProfile), item.detail, item.activityLabel,
+      item.complexity, item.qty, item.countUnit, role.name, item.mandayByRole.get(role.id) ?? 0,
+      item.commercialByRole.get(role.id) ?? null, item.actualByRole.get(role.id) ?? null,
+      item.billingStatusByRole.get(role.id) === false ? 'No' : 'Yes',
+      item.sourceReference, item.baselineConfirmed ? 'Yes' : 'No', item.complexityFacts])
+  }
+  for (const phase of summary.phases) for (const [roleId, md] of phase.derivedByRole) {
+    evidence.addRow([phase.name, profileLabel(phase.deliveryProfile), 'Phase ratio fallback', null,
+      null, 1, 'ต่อ phase', roles.find(r => r.id === roleId)?.name, md, null, null, 'Yes', null, 'No', null])
+  }
+  evidence.eachRow((row, rowNumber) => {
+    row.alignment = { vertical: 'top', wrapText: true }
+    if (rowNumber > 1) for (const column of [6, 9, 10, 11]) row.getCell(column).numFmt = '0.##'
+  })
+  evidence.autoFilter = { from: 'A1', to: 'O1' }
 
   return wb
 }

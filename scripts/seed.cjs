@@ -25,6 +25,7 @@ const bcrypt = require('bcryptjs')
 const root = path.resolve(__dirname, '..')
 const file = path.resolve(root, process.env.DATABASE_PATH || './data/estmanday.db')
 const matrix = require(path.join(root, 'src', 'lib', 'db', 'standard-matrix.json'))
+const historicalRoles = require(path.join(root, 'src', 'lib', 'db', 'historical-roles.json'))
 
 if (!fs.existsSync(file)) {
   throw new Error(`database not found: ${file}\nrun "node scripts/migrate.cjs" first`)
@@ -73,6 +74,10 @@ const seedAll = db.transaction(() => {
       sortOrder: role.sortOrder,
     })
   }
+
+  // Preserve observed joint/platform roles without inventing calibrated rates.
+  const addEvidenceRole = db.prepare(`INSERT INTO roles (code,name,rate_per_md,scope,sort_order) VALUES (@code,@name,0,'item',@sortOrder) ON CONFLICT(code) DO NOTHING`)
+  for (const role of historicalRoles) addEvidenceRole.run(role)
 
   const retireRole = db.prepare(
     'UPDATE roles SET active = 0 WHERE code = ? AND active = 1',
@@ -259,7 +264,7 @@ const seedAll = db.transaction(() => {
   }
 
   return {
-    roles: matrix.roles.length,
+    roles: matrix.roles.length + historicalRoles.length,
     cells: cellCount,
     activities: matrix.activities.length,
   }

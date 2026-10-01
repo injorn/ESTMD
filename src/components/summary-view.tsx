@@ -1,6 +1,7 @@
 import { Fragment } from 'react'
 
 import type { Summary } from '@/lib/summary'
+import { profileLabel } from '@/lib/delivery-profiles'
 
 const baht = (n: number) =>
   n.toLocaleString('th-TH', { maximumFractionDigits: 0 })
@@ -41,6 +42,8 @@ export function SummaryView({ summary }: { summary: Summary }) {
 
   return (
     <div className="space-y-4">
+      {summary.warnings.length > 0 ? <ul className="card space-y-1 p-4 text-sm text-muted">{summary.warnings.map(w => <li key={w}>{w}</li>)}</ul> : null}
+      <p className="text-sm text-muted">MD ประเมินก่อนปรับงบ {summary.totalManday} · คิดเงิน {summary.billableManday} · ไม่คิดเงิน {Math.round((summary.totalManday - summary.billableManday) * 100) / 100} MD</p>
       <dl className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {[
           {
@@ -119,6 +122,7 @@ export function SummaryView({ summary }: { summary: Summary }) {
                 </td>
                 <td className="px-3 py-2 text-center tabular-nums">
                   {role.manday}
+                  {role.billableManday < role.manday ? <span className="block text-[10px] text-muted">คิดเงิน {role.billableManday}</span> : null}
                   {role.scope === 'phase' ? (
                     <span className="ml-1 text-[10px] text-accent">phase</span>
                   ) : null}
@@ -223,10 +227,12 @@ export function SummaryView({ summary }: { summary: Summary }) {
                           className="border-r border-line bg-background/50 px-4 py-2 font-medium"
                         >
                           {phase.name}
+                          <span className="mt-1 block text-xs font-normal text-muted">{profileLabel(phase.deliveryProfile)}</span>
                         </td>
                       ) : null}
                       <td className="px-3 py-2">
                         <span className="whitespace-pre-line">{item.detail}</span>
+                        <span className="mt-1 block text-xs text-muted">{item.qty} {item.countUnit ?? 'ต่อรายการ'} · {item.baselineConfirmed ? 'ยืนยัน Baseline' : 'ยังไม่ยืนยัน Baseline'}{item.sourceReference ? ` · ${item.sourceReference}` : ''}</span>
                         {item.activityLabel ? (
                           <span className="mt-0.5 block text-xs text-muted">
                             {item.activityLabel}

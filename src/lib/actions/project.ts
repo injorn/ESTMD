@@ -28,6 +28,8 @@ import {
   round2,
 } from '@/lib/estimate'
 import { listRoles } from '@/lib/queries'
+import { DELIVERY_PROFILES, isMatrixProfile } from '@/lib/delivery-profiles'
+import { rebuildProjectMandays, saveEffortCell, updateGeneratedItem } from '@/lib/effort-store'
 
 /** nonce increments on every successful save, so a form can remount itself. */
 export type ActionState = { error?: string; ok?: string; nonce?: number }
@@ -187,6 +189,8 @@ export async function addPhase(formData: FormData) {
   const name = String(formData.get('name') ?? '').trim()
   if (!Number.isInteger(projectId) || !name) return
 
+  const deliveryProfile = z.enum(DELIVERY_PROFILES).parse(formData.get('deliveryProfile') ?? 'legacy')
+
   const [{ max }] = await db
     .select({ max: sql<number>`coalesce(max(${projectPhases.sortOrder}), 0)` })
     .from(projectPhases)
@@ -194,7 +198,7 @@ export async function addPhase(formData: FormData) {
 
   await db
     .insert(projectPhases)
-    .values({ projectId, name, sortOrder: max + 10 })
+    .values({ projectId, name, deliveryProfile, sortOrder: max + 10 })
   await touch(projectId)
   revalidatePath(`/projects/${projectId}`)
 }
@@ -259,8 +263,12 @@ async function mandaysForItem(
   activityId: number | null,
   complexity: 'L' | 'M' | 'H',
   qty: number,
+  phaseId: number,
 ) {
   const roles = await listRoles()
+  const [phase] = await db.select().from(projectPhases).where(and(eq(projectPhases.id, phaseId), eq(projectPhases.projectId, projectId)))
+  if (!phase) throw new Error('ไม่พบกลุ่มงานในโครงการนี้')
+  if (!isMatrixProfile(phase.deliveryProfile)) return roles.map(r => ({ roleId: r.id, manday: 0 }))
   if (activityId == null) return roles.map((r) => ({ roleId: r.id, manday: 0 }))
 
   const multiplier = await projectMultiplier(projectId)
@@ -293,6 +301,7 @@ async function applyStandardMandays(
     .select({
       roleId: projectItemMandays.roleId,
       overridden: projectItemMandays.overridden,
+      manday: projectItemMandays.manday,
     })
     .from(projectItemMandays)
     .where(eq(projectItemMandays.itemId, itemId))
@@ -302,6 +311,9 @@ async function applyStandardMandays(
 
   for (const row of rows) {
     if (overridden.has(row.roleId)) continue
+    if (existing.find(e => e.roleId === row.roleId)?.manday !== row.manday) {
+      await db.update(projectItems).set({ baselineConfirmed: false }).where(eq(projectItems.id, itemId))
+    }
     await db
       .insert(projectItemMandays)
       .values({ itemId, roleId: row.roleId, manday: row.manday })
@@ -345,11 +357,17 @@ export async function saveItem(
   if (!parsed.success) return { error: parsed.error.issues[0].message }
 
   const activityId = asId(parsed.data.activityId)
+  const [phase] = await db.select().from(projectPhases).where(and(eq(projectPhases.id, parsed.data.phaseId), eq(projectPhases.projectId, projectId)))
+  if (!phase) return { error: 'ไม่พบกลุ่มงานในโครงการนี้' }
+  if (formData.get('id')) {
+    const [item] = await db.select({ id: projectItems.id }).from(projectItems).where(and(eq(projectItems.id, Number(formData.get('id'))), eq(projectItems.projectId, projectId)))
+    if (!item) return { error: 'ไม่พบรายการในโครงการนี้' }
+  }
 
   // A row the matrix counts once per project must not be multiplied, whatever
   // the form sent.
   let qty = parsed.data.qty
-  if (activityId != null) {
+  if (activityId != null && isMatrixProfile(phase.deliveryProfile)) {
     const [activity] = await db
       .select({ countUnit: activities.countUnit })
       .from(activities)
@@ -366,6 +384,7 @@ export async function saveItem(
     qty,
     dueDatePlan: parsed.data.dueDatePlan || null,
     deliverables: parsed.data.deliverables || null,
+    baselineConfirmed: false,
   }
 
   const idRaw = formData.get('id')
@@ -389,7 +408,7 @@ export async function saveItem(
 
   await applyStandardMandays(
     itemId,
-    await mandaysForItem(projectId, activityId, parsed.data.complexity, qty),
+    await mandaysForItem(projectId, activityId, parsed.data.complexity, qty, phase.id),
   )
   await touch(projectId)
   revalidatePath(`/projects/${projectId}`)
@@ -411,7 +430,7 @@ export async function deleteItem(formData: FormData) {
 
 /** Manual edit of a single manday cell; marks it as an override. */
 export async function overrideManday(formData: FormData) {
-  await requireWriter()
+  const actor = await requireWriter()
   const itemId = Number(formData.get('itemId'))
   const roleId = Number(formData.get('roleId'))
   const projectId = Number(formData.get('projectId'))
@@ -419,53 +438,23 @@ export async function overrideManday(formData: FormData) {
   if (!Number.isInteger(itemId) || !Number.isInteger(roleId)) return
   if (!Number.isFinite(manday) || manday < 0) return
 
-  await db
-    .insert(projectItemMandays)
-    .values({ itemId, roleId, manday: round2(manday), overridden: true })
-    .onConflictDoUpdate({
-      target: [projectItemMandays.itemId, projectItemMandays.roleId],
-      set: { manday: round2(manday), overridden: true },
-    })
+  const [cell] = await db.select().from(projectItemMandays).where(and(eq(projectItemMandays.itemId, itemId), eq(projectItemMandays.roleId, roleId)))
+  saveEffortCell(db, actor, { projectId, itemId, roleId, manday, commercialManday: cell?.commercialManday ?? null, actualManday: cell?.actualManday ?? null, billable: cell?.billable ?? true })
   await touch(projectId)
   revalidatePath(`/projects/${projectId}`)
 }
 
 /** Drops every override and rebuilds the estimate from the standard matrix. */
-export async function recomputeProject(projectId: number) {
-  const items = await db
-    .select({
-      id: projectItems.id,
-      activityId: projectItems.activityId,
-      complexity: projectItems.complexity,
-      qty: projectItems.qty,
-    })
-    .from(projectItems)
-    .where(eq(projectItems.projectId, projectId))
-
-  for (const item of items) {
-    const rows = await mandaysForItem(
-      projectId,
-      item.activityId,
-      item.complexity,
-      item.qty,
-    )
-    for (const row of rows) {
-      await db
-        .insert(projectItemMandays)
-        .values({ itemId: item.id, roleId: row.roleId, manday: row.manday })
-        .onConflictDoUpdate({
-          target: [projectItemMandays.itemId, projectItemMandays.roleId],
-          set: { manday: row.manday, overridden: false },
-        })
-    }
-  }
+export async function recomputeProject(projectId: number, resetOverrides = false) {
+  const actor = await requireWriter()
+  rebuildProjectMandays(db, actor, projectId, resetOverrides)
 }
 
 export async function resetToStandard(formData: FormData) {
   await requireWriter()
   const projectId = Number(formData.get('projectId'))
   if (!Number.isInteger(projectId)) return
-  await recomputeProject(projectId)
+  await recomputeProject(projectId, true)
   await touch(projectId)
   revalidatePath(`/projects/${projectId}`)
 }
@@ -516,7 +505,7 @@ export async function saveProjectRoles(formData: FormData) {
  * questionnaire into the wizard for a requirement that was not clear.
  */
 export async function generateItemsFromAnswers(formData: FormData) {
-  await requireWriter()
+  const actor = await requireWriter()
   const projectId = Number(formData.get('projectId'))
   if (!Number.isInteger(projectId)) return
 
@@ -598,10 +587,7 @@ export async function generateItemsFromAnswers(formData: FormData) {
     let itemId: number
 
     if (existingId) {
-      await db
-        .update(projectItems)
-        .set({ detail, qty })
-        .where(eq(projectItems.id, existingId))
+      updateGeneratedItem(db, actor, { projectId, itemId: existingId, detail, qty })
       itemId = existingId
     } else {
       const phaseId = await phaseFor(answer.groupName ?? answer.name)
@@ -622,7 +608,7 @@ export async function generateItemsFromAnswers(formData: FormData) {
 
     await applyStandardMandays(
       itemId,
-      await mandaysForItem(projectId, answer.activityId, answer.complexity, qty),
+      await mandaysForItem(projectId, answer.activityId, answer.complexity, qty, (await db.select({ phaseId: projectItems.phaseId }).from(projectItems).where(eq(projectItems.id, itemId)))[0].phaseId),
     )
   }
 

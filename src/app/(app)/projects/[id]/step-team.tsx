@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { saveProjectRoles } from '@/lib/actions/project'
 import { round2 } from '@/lib/estimate'
 import type { ProjectDetail } from '@/lib/queries'
+import { buildSummary } from '@/lib/summary'
 
 export function StepTeam({
   detail,
@@ -11,13 +12,13 @@ export function StepTeam({
   detail: ProjectDetail
   readOnly: boolean
 }) {
-  const { project, roles, mandays } = detail
+  const { project, roles } = detail
   const byRole = new Map(detail.projectRoles.map((pr) => [pr.roleId, pr]))
 
-  const mandayByRole = new Map<number, number>()
-  for (const m of mandays) {
-    mandayByRole.set(m.roleId, (mandayByRole.get(m.roleId) ?? 0) + m.manday)
-  }
+  // Preview every role, including roles not yet selected for export.
+  const preview = buildSummary({ ...detail, projectRoles: roles.map(r => ({ projectId: project.id, roleId: r.id, id: byRole.get(r.id)?.id ?? -r.id, resourceLabel: null, personName: null, ratePerMd: byRole.get(r.id)?.ratePerMd ?? r.ratePerMd, included: true, sortOrder: r.sortOrder })) })
+  const mandayByRole = new Map(preview.roles.map(r => [r.id, r.manday]))
+  const costByRole = new Map(preview.roles.map(r => [r.id, r.cost]))
 
   return (
     <div className="space-y-4">
@@ -116,7 +117,7 @@ export function StepTeam({
                     />
                   </td>
                   <td className="px-3 py-2 text-right tabular-nums">
-                    {(manday * rate).toLocaleString('th-TH')}
+                    {(costByRole.get(role.id) ?? 0).toLocaleString('th-TH')}
                   </td>
                 </tr>
               )

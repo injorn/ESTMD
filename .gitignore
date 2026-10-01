@@ -43,7 +43,13 @@ next-env.d.ts
 # local database
 /data/*.db
 /data/*.db-*
+/data/ai-evaluation/
+/docs/analysis/historical-matrix-2026-10-01/source-cells.json
+/docs/analysis/historical-matrix-2026-10-01/inventory.txt
+/docs/analysis/historical-matrix-2026-10-01/profiles.txt
 
 # release output
 /release/
 /logs/
+/.playwright-cli/
+/output/playwright/

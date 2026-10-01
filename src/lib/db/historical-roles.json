@@ -1,0 +1,13 @@
+[
+  { "code": "BA_TESTER", "name": "BA / Tester (รวม)", "sortOrder": 210 },
+  { "code": "PM_SAP", "name": "PM / SAP Functional (รวม)", "sortOrder": 220 },
+  { "code": "TECH_LEAD_DEV", "name": "Tech Lead / Developer (รวม)", "sortOrder": 230 },
+  { "code": "SAP_BASIS", "name": "SAP Basis", "sortOrder": 240 },
+  { "code": "CPI", "name": "SAP CPI", "sortOrder": 250 },
+  { "code": "MULESOFT", "name": "MuleSoft", "sortOrder": 260 },
+  { "code": "LEGACY", "name": "Legacy Team", "sortOrder": 270 },
+  { "code": "SHAREPOINT", "name": "SharePoint Admin", "sortOrder": 280 },
+  { "code": "ETL", "name": "ETL / Informatica", "sortOrder": 290 },
+  { "code": "CAA", "name": "CA&A", "sortOrder": 300 },
+  { "code": "APP_SUPPORT", "name": "Application Support", "sortOrder": 310 }
+]

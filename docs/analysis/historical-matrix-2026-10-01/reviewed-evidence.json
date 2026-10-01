@@ -1,0 +1,265 @@
+{
+  "workbooks": 24,
+  "uniquePotCodes": 23,
+  "primaryTablesRcpIdentical": true,
+  "allSourceFilesUnchanged": true,
+  "smartSearch": {
+    "baselineMd": 770.0,
+    "commercialMd": 938.0,
+    "detailMd": 747.0
+  },
+  "reviewedAggregates": [
+    {
+      "project": "POT253760",
+      "sheet": "PTTDigital_Manday_Release",
+      "range": "D41:P41",
+      "totalMd": 608.0,
+      "roles": {
+        "DEV": 237.0,
+        "PM": 64.0,
+        "SA": 80.0,
+        "BA": 140.0,
+        "TESTER": null
+      },
+      "ratioToDev": {
+        "PM": 0.270042194092827,
+        "SA": 0.33755274261603374,
+        "BA": 0.5907172995780591
+      }
+    },
+    {
+      "project": "POT260876",
+      "sheet": "Calsheet",
+      "range": "D173:M173",
+      "totalMd": 485.0,
+      "roles": {
+        "DEV": 241.0,
+        "PM": 35.0,
+        "SA": 113.0,
+        "BA": 90.0,
+        "TESTER": null
+      },
+      "ratioToDev": {
+        "PM": 0.14522821576763487,
+        "SA": 0.46887966804979253,
+        "BA": 0.37344398340248963
+      }
+    },
+    {
+      "project": "POT261160",
+      "sheet": "PTTDigital_Manday",
+      "range": "D73:K73",
+      "totalMd": 182.0,
+      "roles": {
+        "DEV": 40.0,
+        "PM": 32.0,
+        "SA": null,
+        "BA": 107.0,
+        "TESTER": null
+      },
+      "ratioToDev": {
+        "PM": 0.8,
+        "BA": 2.675
+      }
+    },
+    {
+      "project": "POT261336",
+      "sheet": "DGT_Manday",
+      "range": "D40:H40",
+      "totalMd": 100.0,
+      "roles": {
+        "DEV": 67.0,
+        "PM": 8.0,
+        "SA": null,
+        "BA": null,
+        "TESTER": null
+      },
+      "ratioToDev": {
+        "PM": 0.11940298507462686
+      }
+    },
+    {
+      "project": "POT261991",
+      "sheet": "PTTDigital_Manday",
+      "range": "D56:N56",
+      "totalMd": 446.0,
+      "roles": {
+        "DEV": 233.0,
+        "PM": 38.0,
+        "SA": 58.0,
+        "BA": 57.0,
+        "TESTER": 44.0
+      },
+      "ratioToDev": {
+        "PM": 0.1630901287553648,
+        "SA": 0.24892703862660945,
+        "BA": 0.2446351931330472,
+        "TESTER": 0.1888412017167382
+      }
+    },
+    {
+      "project": "POT261467",
+      "sheet": "Digital_Manday",
+      "range": "D43:H43",
+      "totalMd": 71.0,
+      "roles": {
+        "DEV": null,
+        "PM": 38.0,
+        "SA": 10.0,
+        "BA": 11.0,
+        "TESTER": 9.0
+      },
+      "ratioToDev": {}
+    },
+    {
+      "project": "POT254773",
+      "sheet": "PTTDigital_Manday",
+      "range": "D49:M49",
+      "totalMd": 152.0,
+      "roles": {
+        "DEV": null,
+        "PM": 16.0,
+        "SA": null,
+        "BA": 133.0,
+        "TESTER": null
+      },
+      "ratioToDev": {}
+    },
+    {
+      "project": "POT261084",
+      "sheet": "Digital_Manday",
+      "range": "D21:N21",
+      "totalMd": 184.0,
+      "roles": {
+        "DEV": null,
+        "PM": 22.0,
+        "SA": null,
+        "BA": null,
+        "TESTER": null
+      },
+      "ratioToDev": {}
+    }
+  ],
+  "sources": [
+    {
+      "file": "POT253411_AOU.F_ENH-PTT-GAS-PTT Smart Search Inventory Tool.xlsx",
+      "sha256": "e4e744afa904e29ca18a7531d17741e99927fdbe6024b42af29358f86b3b72bd",
+      "primarySheet": "PTT Digital"
+    },
+    {
+      "file": "POT253571_AOU.A_PJR-PTT-GAS-พัฒนาระบบ eMOC.xlsx",
+      "sha256": "dccfc0c92a59b087a0ac6f3a5ff6c138777a82b9e98ed4165bab322475b3bae9",
+      "primarySheet": "ICT_Manday"
+    },
+    {
+      "file": "POT253572_AOU.A_ENH-PTT-GAS-ปรับปรุงระบบ PTT-GSP-IRIN.xlsx",
+      "sha256": "4f85c7757ea718f0c4522a21eea83f85a764fe1739b9b7dd2d1a8b747c06ee7c",
+      "primarySheet": "ICT_Manday"
+    },
+    {
+      "file": "POT253760_AOU.F_ENH-PTT-HO-ปรับปรุงระบบ Smart Procurement ปี 2569.xlsx",
+      "sha256": "41dd45364e54d5312d47c9d88d7852d033fbca8bbabbaec7d5b468c4a8d8afea",
+      "primarySheet": "PTTDigital_Manday_Release"
+    },
+    {
+      "file": "POT253954_AOU.H_ENH-PTT-HO-E-Recruit & Coach-ปรับปรุงระบบ E-recruitment.xlsx",
+      "sha256": "49cbdcabb3281f703717ec85bbb5e3979864c51c4bd057b0f72579ff098deffb",
+      "primarySheet": "E-Recruit adjust before EA"
+    },
+    {
+      "file": "POT254055_AOU.H_ENH-PTT-HO-ENH-PTT-e-Provident Fund.xlsx",
+      "sha256": "22ff8461d854f95d337100fa1e544a8378ea48d4c557342d5cc2aeb064630c98",
+      "primarySheet": "enh202(Re)+security+CR V2"
+    },
+    {
+      "file": "POT254316_AOU.F_ENH-PTT-GAS-SAP LO-แก้ไขระบบ SAP (S4HANA).xlsx",
+      "sha256": "a0f6df5554af03fbfc9ca019347cedff69f30b5466ce2da7311a535c56774956",
+      "primarySheet": "Cost Sheet"
+    },
+    {
+      "file": "POT254392_AOU.P_ENH-PTT-GAS-GSP Pyramid-ปรับปรุง Deferral Process.xlsx",
+      "sha256": "ca40bd27778ca396a3c5584afaa34363912fbb9e5e5f130a8915e3f90ddde643",
+      "primarySheet": "PTTDigital_Manday"
+    },
+    {
+      "file": "POT254773_AOU_ENH-PTT-HO-Risk and Control Platform WEB (RCP) ปี 2569.xlsx",
+      "sha256": "eb0708801f0a9df8564d2e2b2850bf0b4647b03396a53a63242af263249ca237",
+      "primarySheet": "PTTDigital_Manday"
+    },
+    {
+      "file": "POT254773_AOU_ENH-PTT-HO-SAP S4-GRC-Access Control-ปรับแก้การจัดการสิทธิ์.xlsx",
+      "sha256": "8e517f49baff2d1d2f286b2322c667331a4188be4834ed2380b0a41354b9f31b",
+      "primarySheet": "PTTDigital_Manday"
+    },
+    {
+      "file": "POT255012_AOU_ENH-PTT-TRD-PTT New CTRM –  Dual Run SmileTrade and OneTrade.xlsx",
+      "sha256": "9b6ae5d06672824ffb8ad403169e6b71b836296059a77704fe85b59cc3f78c73",
+      "primarySheet": "CostSheet"
+    },
+    {
+      "file": "POT255017_AOU.H_ENH-PTTEP-ClickNGo Phase 3 Oversea Rollout.xlsx",
+      "sha256": "442516ad14892619a6ad171dd343230a3ded3de9a780afe8ad9180b1454ebea4",
+      "primarySheet": "ClickNGo Calsheet"
+    },
+    {
+      "file": "POT260876_AOU.H_PJR-PTTEP-CTM Improvement 2026.xlsx",
+      "sha256": "51ec1b781df54ef8eaebc3df7ae587447afd6491071ae45b6d77f302c9c3d1ae",
+      "primarySheet": "Calsheet"
+    },
+    {
+      "file": "POT261084_API_PJR-GC-Migrate Orchestra.xlsx",
+      "sha256": "0a876976867c2e8efdc71ee5daefb8c30f14f8ac20846d3035cc20c626237db8",
+      "primarySheet": "Digital_Manday"
+    },
+    {
+      "file": "POT261134_AOU.O_ENH-PTTOR-พัฒนาโปรแกรมเพื่อใช้ในการกำหนดเงื่อนไข Special Processing.xlsx",
+      "sha256": "3e1b4572618e352068e1978cebc51bb380a1435064aaf84a70a4958e805527be",
+      "primarySheet": "Template for Other service"
+    },
+    {
+      "file": "POT261160_AOU.P_PJR-PTTEPI-Discrepancy.xlsx",
+      "sha256": "de3089aefc6e0d88a8306c9807fc6b274dd7b05e6e0af4709df08ffcffaf805f",
+      "primarySheet": "PTTDigital_Manday"
+    },
+    {
+      "file": "POT261243_AOU.F_ENH-PTTOR-ปรับปรุง SAP (T-Code ZS4RTSME003 PO Schedule.xlsx",
+      "sha256": "4218c161cbd23a520255576e8d61c4f5e24c737196e673716322edee47613049",
+      "primarySheet": "Sheet1"
+    },
+    {
+      "file": "POT261336_AOU.H_ENH-PTTEP-iCMS 2026 Enhancement.xlsx",
+      "sha256": "862ae3bb22b3d305da084d68ba7371e096c5b5fe5b70dd88d370abec6477255b",
+      "primarySheet": "DGT_Manday"
+    },
+    {
+      "file": "POT261375_AOU.O_ENH-PTT-GAS-Sales to Order-ปรับปรุงการดึงข้อมูล.xlsx",
+      "sha256": "eae35b2df94b31f73e56915f0f53c2a2d7b64ba6bf4de367dc483c8ff4236d7f",
+      "primarySheet": "Template for Other service"
+    },
+    {
+      "file": "POT261434_AOU.O_ENH-PTTOR- ปรับปรุงระบบ SAP และ Amazon Billing Web Service.xlsx",
+      "sha256": "f1d8866fc13a43a80a5eaf49b15a5e7517fb1ab9e451d01f5d5b7ac1c3686083",
+      "primarySheet": "Template for Other service"
+    },
+    {
+      "file": "POT261467_AOU.A_ENH-PTTTANK-eMOC ปี 2569.xlsx",
+      "sha256": "f786d6f0c8898c49097266385bdf661367fbeadaff71594ae44b70d26eb7aadf",
+      "primarySheet": "Digital_Manday"
+    },
+    {
+      "file": "POT261677_AOU.F_ENH-PTT-HO-SAP-พัฒนา Template LSMW.xlsx",
+      "sha256": "b16086d57cbd1cff7e521446692123e75d69fb9996d3b639dc886610ecaac036",
+      "primarySheet": "Resource"
+    },
+    {
+      "file": "POT261991_AOU.P_ENH-PTTEP-Digital Job Card Phase 5.xlsx",
+      "sha256": "cb6d6d5105f65e614c5a72406141a4bf4847f934d1cb06218ddd966f8249f4e8",
+      "primarySheet": "PTTDigital_Manday"
+    },
+    {
+      "file": "POT262125_AOU.O_ENH-PTT-GAS-SAP-สนับสนุนการขาย LPG ปี 2569.xlsx",
+      "sha256": "867a7db2f50dbc67965bcce9da27878800659833013a4623e1b4160f100453d5",
+      "primarySheet": "Template for Other service"
+    }
+  ]
+}

@@ -1,4 +1,6 @@
 import { sql } from 'drizzle-orm'
+import type { EvaluationSnapshot } from '../estimation-ai/evaluation'
+import { DELIVERY_PROFILES } from '../delivery-profiles'
 import {
   index,
   integer,
@@ -200,6 +202,7 @@ export const projectPhases = sqliteTable(
       .notNull()
       .references(() => projects.id, { onDelete: 'cascade' }),
     name: text('name').notNull(),
+    deliveryProfile: text('delivery_profile', { enum: DELIVERY_PROFILES }).notNull().default('legacy'),
     sortOrder: integer('sort_order').notNull().default(0),
   },
   (t) => [index('project_phases_project_idx').on(t.projectId)],
@@ -227,6 +230,10 @@ export const projectItems = sqliteTable(
     qty: real('qty').notNull().default(1),
     dueDatePlan: text('due_date_plan'),
     deliverables: text('deliverables'),
+    sourceReference: text('source_reference'),
+    baselineConfirmed: integer('baseline_confirmed', { mode: 'boolean' }).notNull().default(false),
+    complexityFacts: text('complexity_facts'),
+    countUnit: text('count_unit'),
     sortOrder: integer('sort_order').notNull().default(0),
   },
   (t) => [index('project_items_project_idx').on(t.projectId)],
@@ -247,9 +254,14 @@ export const projectItemMandays = sqliteTable(
       .notNull()
       .references(() => roles.id, { onDelete: 'cascade' }),
     manday: real('manday').notNull().default(0),
+    commercialManday: real('commercial_manday'),
+    actualManday: real('actual_manday'),
+    billable: integer('billable', { mode: 'boolean' }).notNull().default(true),
     overridden: integer('overridden', { mode: 'boolean' })
       .notNull()
       .default(false),
+    /** New explicit effort can replace phase ratios; old ignored overrides stay unchanged. */
+    explicitEffort: integer('explicit_effort', { mode: 'boolean' }).notNull().default(false),
   },
   (t) => [uniqueIndex('project_item_mandays_uq').on(t.itemId, t.roleId)],
 )
@@ -328,3 +340,57 @@ export type TechStack = typeof techStacks.$inferSelect
 export type StackModifier = typeof stackModifiers.$inferSelect
 export type Project = typeof projects.$inferSelect
 export type ProjectItem = typeof projectItems.$inferSelect
+
+/** AI proposals are history only; saved item complexity remains human-controlled. */
+export const estimationSuggestions = sqliteTable('estimation_suggestions', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  itemId: integer('item_id').notNull().references(() => projectItems.id, { onDelete: 'cascade' }),
+  inputHash: text('input_hash').notNull(),
+  inputSnapshot: text('input_snapshot', { mode: 'json' }).$type<Record<string, unknown>>().notNull(),
+  criteriaVersion: text('criteria_version').notNull(),
+  criteriaSnapshot: text('criteria_snapshot', { mode: 'json' }).$type<Record<string, unknown>>().notNull(),
+  model: text('model').notNull(),
+  suggestedLevel: text('suggested_level', { enum: COMPLEXITIES }),
+  /** null when no usable answer; never a permission to update an estimate. */
+  confidence: real('confidence'),
+  rawResponse: text('raw_response', { mode: 'json' }).$type<Record<string, unknown>>().notNull(),
+  requestedBy: integer('requested_by').notNull().references(() => users.id),
+  createdAt: integer('created_at').notNull().default(now),
+}, t => [index('estimation_suggestions_item_idx').on(t.itemId)])
+
+/** Append-only review history, separate from the original model response. */
+export const estimationReviews = sqliteTable('estimation_reviews', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  suggestionId: integer('suggestion_id').notNull().references(() => estimationSuggestions.id, { onDelete: 'cascade' }),
+  confirmedLevel: text('confirmed_level', { enum: COMPLEXITIES }).notNull(),
+  reason: text('reason').notNull().default(''),
+  reviewedInputHash: text('reviewed_input_hash').notNull(),
+  reviewedBy: integer('reviewed_by').notNull().references(() => users.id),
+  createdAt: integer('created_at').notNull().default(now),
+}, t => [index('estimation_reviews_suggestion_idx').on(t.suggestionId)])
+
+/** Frozen historical examples, independent of the mutable estimate. */
+export const evaluationCases = sqliteTable('evaluation_cases', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  sourceHash: text('source_hash').notNull().unique(),
+  snapshot: text('snapshot', { mode: 'json' }).$type<EvaluationSnapshot>().notNull(),
+  status: text('status', { enum: ['pending', 'reviewed', 'excluded'] }).notNull().default('pending'),
+  expectedLevel: text('expected_level', { enum: COMPLEXITIES }),
+  reviewNote: text('review_note').notNull().default(''),
+  revision: integer('revision').notNull().default(0),
+  capturedBy: integer('captured_by').notNull().references(() => users.id),
+  reviewedBy: integer('reviewed_by').references(() => users.id),
+  reviewedAt: integer('reviewed_at'),
+  createdAt: integer('created_at').notNull().default(now),
+})
+
+export const evaluationCaseReviews = sqliteTable('evaluation_case_reviews', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  caseId: integer('case_id').notNull().references(() => evaluationCases.id, { onDelete: 'cascade' }),
+  revision: integer('revision').notNull(),
+  status: text('status', { enum: ['reviewed', 'excluded'] }).notNull(),
+  expectedLevel: text('expected_level', { enum: COMPLEXITIES }),
+  note: text('note').notNull(),
+  reviewedBy: integer('reviewed_by').notNull().references(() => users.id),
+  createdAt: integer('created_at').notNull().default(now),
+}, t => [uniqueIndex('evaluation_case_reviews_revision_uq').on(t.caseId, t.revision)])

@@ -14,7 +14,9 @@
     "db:migrate": "node scripts/migrate.cjs",
     "db:generate": "drizzle-kit generate",
     "test:upgrade": "node scripts/test-upgrade.cjs",
-    "matrix:build": "node scripts/build-matrix.cjs"
+    "matrix:build": "node scripts/build-matrix.cjs",
+    "db:evidence-roles": "node scripts/seed-evidence-roles.cjs",
+    "test:profiles": "node --conditions=react-server --import tsx --test scripts/test-delivery-profiles.ts"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",

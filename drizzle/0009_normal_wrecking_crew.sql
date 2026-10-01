@@ -1,0 +1,1 @@
+ALTER TABLE `project_item_mandays` ADD `explicit_effort` integer DEFAULT false NOT NULL;

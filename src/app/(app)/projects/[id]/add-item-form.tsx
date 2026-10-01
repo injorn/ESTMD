@@ -6,6 +6,7 @@ import { useFormStatus } from 'react-dom'
 import { saveItem, type ActionState } from '@/lib/actions/project'
 import { ONCE_PER_PROJECT_UNIT, type Activity } from '@/lib/db/schema'
 import { STANDARD } from '@/lib/standard'
+import { MATRIX_GUIDANCE } from '@/lib/matrix-guidance'
 
 const GRID_CLASS =
   'grid gap-2 lg:grid-cols-[minmax(0,2.4fr)_minmax(0,1.4fr)_80px_90px_auto]'
@@ -42,11 +43,11 @@ const FIELD_HINTS = [
   },
 ] as const
 
-function Fields({ activities }: { activities: Activity[] }) {
+function Fields({ activities, directEffort }: { activities: Activity[]; directEffort: boolean }) {
   const [activityId, setActivityId] = useState('')
 
   const selected = activities.find((a) => String(a.id) === activityId)
-  const oncePerProject = selected?.countUnit === ONCE_PER_PROJECT_UNIT
+  const oncePerProject = !directEffort && selected?.countUnit === ONCE_PER_PROJECT_UNIT
 
   const grouped = Object.entries(
     activities.reduce<Record<string, Activity[]>>((acc, a) => {
@@ -152,10 +153,11 @@ function Fields({ activities }: { activities: Activity[] }) {
           <span className="font-medium">
             {selected.code} {selected.name}
           </span>{' '}
-          — ค่า MD คิด{' '}
+          — {directEffort ? 'ลง MD รวมเอง; หน่วยอ้างอิง ' : 'ค่า MD คิด '}
           <span className="font-medium">{selected.countUnit}</span>
           {oncePerProject ? ' จึงล็อกจำนวนไว้ที่ 1' : ''}
           {selected.notes ? ` · ${selected.notes}` : ''}
+          {MATRIX_GUIDANCE[selected.code] ? <span className="mt-1 block">{MATRIX_GUIDANCE[selected.code]}</span> : null}
         </p>
       ) : null}
     </>
@@ -166,10 +168,12 @@ export function AddItemForm({
   projectId,
   phaseId,
   activities,
+  directEffort = false,
 }: {
   projectId: number
   phaseId: number
   activities: Activity[]
+  directEffort?: boolean
 }) {
   const [state, formAction] = useActionState<ActionState, FormData>(saveItem, {})
 
@@ -179,7 +183,7 @@ export function AddItemForm({
       <input type="hidden" name="phaseId" value={phaseId} />
 
       {/* A fresh row after each add, so dozens of items can be keyed in a row. */}
-      <Fields key={state.nonce ?? 0} activities={activities} />
+      <Fields key={state.nonce ?? 0} activities={activities} directEffort={directEffort} />
 
       {state.error ? (
         <p role="alert" className="text-xs text-danger">

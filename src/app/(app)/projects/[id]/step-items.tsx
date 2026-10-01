@@ -13,6 +13,9 @@ import { round2 } from '@/lib/estimate'
 import type { ProjectDetail } from '@/lib/queries'
 
 import { AddItemForm } from './add-item-form'
+import { EvidenceForm, ProfileForm } from './effort-forms'
+import { PROFILE_OPTIONS, isMatrixProfile, profileLabel } from '@/lib/delivery-profiles'
+import { buildSummary } from '@/lib/summary'
 
 export function StepItems({
   detail,
@@ -41,7 +44,8 @@ export function StepItems({
       ),
     )
 
-  const grandTotal = round2(items.reduce((s, i) => s + itemTotal(i.id), 0))
+  const summary = buildSummary(detail)
+  const grandTotal = summary.totalManday
 
   return (
     <div className="space-y-4">
@@ -73,7 +77,7 @@ export function StepItems({
           <form action={resetToStandard}>
             <input type="hidden" name="projectId" value={project.id} />
             <button type="submit" className="btn-ghost text-xs">
-              คำนวณใหม่จาก Standard Matrix
+              ตั้งรายการ Matrix กลับเป็นมาตรฐาน
             </button>
           </form>
         )}
@@ -87,9 +91,7 @@ export function StepItems({
 
       {phases.map((phase) => {
         const phaseItems = items.filter((i) => i.phaseId === phase.id)
-        const phaseTotal = round2(
-          phaseItems.reduce((s, i) => s + itemTotal(i.id), 0),
-        )
+        const phaseTotal = summary.phases.find(p => p.id === phase.id)?.total ?? 0
 
         return (
           <section key={phase.id} className="card overflow-hidden">
@@ -143,6 +145,9 @@ export function StepItems({
               )}
             </header>
 
+            {readOnly ? <p className="px-4 py-2 text-sm text-muted">{profileLabel(phase.deliveryProfile)}</p> : <ProfileForm projectId={project.id} phaseId={phase.id} profile={phase.deliveryProfile} />}
+            {!isMatrixProfile(phase.deliveryProfile) ? <p className="px-4 py-2 text-xs text-muted">ลง MD รวมตามบทบาทในรายการ; ค่าเริ่มต้น 0 รอประเมิน · ไม่ใช้สัดส่วนจาก DEV ภายใน</p> : null}
+
             <div className="overflow-x-auto">
               <table className="w-full min-w-[900px] border-collapse text-sm">
                 <thead>
@@ -185,6 +190,7 @@ export function StepItems({
                       >
                         <td className="px-3 py-2">
                           <p className="whitespace-pre-line">{item.detail}</p>
+                          {readOnly ? <p className="mt-1 text-xs text-muted">{item.sourceReference ?? 'ยังไม่ระบุแหล่งอ้างอิง'}{item.baselineConfirmed ? ' · ยืนยัน Baseline แล้ว' : ''}</p> : <EvidenceForm item={item} profile={phase.deliveryProfile} roles={roles} cells={mandays} />}
                         </td>
                         <td className="px-2 py-2 text-xs text-muted">
                           {activity ? `${activity.code} ${activity.name}` : '-'}
@@ -198,7 +204,7 @@ export function StepItems({
                           <span className="tabular-nums">{item.qty}</span>
                           {activity ? (
                             <span className="block text-[11px] leading-tight text-muted">
-                              {activity.countUnit}
+                              {(!isMatrixProfile(phase.deliveryProfile) ? item.countUnit : null) ?? activity.countUnit}
                             </span>
                           ) : null}
                         </td>
@@ -253,6 +259,7 @@ export function StepItems({
                                         : ''
                                     }`}
                                   />
+                                  <button type="submit" className="btn-ghost h-6 w-full px-0 text-[10px]">บันทึก</button>
                                 </form>
                               )}
                             </td>
@@ -304,6 +311,7 @@ export function StepItems({
                   projectId={project.id}
                   phaseId={phase.id}
                   activities={activities.filter((a) => a.active)}
+                  directEffort={!isMatrixProfile(phase.deliveryProfile)}
                 />
               </div>
             )}
@@ -326,6 +334,7 @@ export function StepItems({
               className="field"
             />
           </div>
+          <label className="text-sm">รูปแบบการส่งมอบ<select name="deliveryProfile" defaultValue="self_dev" className="field mt-1">{PROFILE_OPTIONS.map(p => <option key={p.value} value={p.value}>{p.label}</option>)}</select></label>
           <button type="submit" className="btn-primary">
             + เพิ่ม Phase
           </button>

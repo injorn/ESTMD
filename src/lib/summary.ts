@@ -1,7 +1,14 @@
 import 'server-only'
 
-import { round2 } from './estimate'
+import {
+  buildMatrixLookup,
+  defaultItemDetail,
+  round2,
+  standardManday,
+} from './estimate'
+import { ONCE_PER_PROJECT_UNIT } from './db/schema'
 import type { ProjectDetail } from './queries'
+import { isMatrixProfile, profileLabel, type DeliveryProfile } from './delivery-profiles'
 
 /** Roles whose man-days are the sizing basis every ratio is measured against. */
 const DEV_CODES = ['DEV', 'DEV_SR']
@@ -17,6 +24,7 @@ export type SummaryRole = {
   ratePerMd: number
   manday: number
   cost: number
+  billableManday: number
   /** Share of Developer man-days this role actually came out at. */
   actualRatio: number | null
   /** Share the standard expects, or null when the standard sets none. */
@@ -34,12 +42,20 @@ export type SummaryItem = {
   deliverables: string | null
   /** roleId -> manday, only for the roles being exported. */
   mandayByRole: Map<number, number>
+  billableByRole: Map<number, number>
+  commercialByRole: Map<number, number | null>
+  actualByRole: Map<number, number | null>
+  billingStatusByRole: Map<number, boolean>
+  sourceReference: string | null
+  baselineConfirmed: boolean
+  complexityFacts: string | null
   total: number
 }
 
 export type SummaryPhase = {
   id: number
   name: string
+  deliveryProfile: DeliveryProfile
   items: SummaryItem[]
   /** roleId -> manday for the phase-scoped roles, derived from the ratio. */
   derivedByRole: Map<number, number>
@@ -50,7 +66,8 @@ export type SummaryPhase = {
 
 /**
  * The single model behind the summary screen and the Excel export, so the
- * numbers on screen are exactly the numbers in the file.
+ * numbers on screen are exactly the numbers in the file. Positive survey
+ * answers without a saved item are represented as in-memory estimate rows.
  *
  * Item-scoped roles are added up from the keyed line items (bottom-up). Roles
  * an admin switched to phase scope are instead derived once per phase as a
@@ -130,11 +147,14 @@ export function buildSummary(detail: ProjectDetail) {
   )
 
   const activityById = new Map(detail.activities.map((a) => [a.id, a]))
+  const matrix = buildMatrixLookup(detail.matrixCells)
   const mandayOf = new Map(
-    detail.mandays.map((m) => [`${m.itemId}_${m.roleId}`, m.manday]),
+    detail.mandays.map((m) => [`${m.itemId}_${m.roleId}`, m]),
   )
 
   const phases: SummaryPhase[] = detail.phases.map((phase) => {
+    const matrixBacked = isMatrixProfile(phase.deliveryProfile)
+    const explicitPhaseRoles = new Set(detail.mandays.filter(m => (m.explicitEffort || (phase.deliveryProfile === 'self_dev' && m.overridden)) && detail.items.some(i => i.id === m.itemId && i.phaseId === phase.id)).map(m => m.roleId))
     const items: SummaryItem[] = detail.items
       .filter((i) => i.phaseId === phase.id)
       .map((item) => {
@@ -142,62 +162,163 @@ export function buildSummary(detail: ProjectDetail) {
           ? activityById.get(item.activityId)
           : null
         const mandayByRole = new Map<number, number>()
+        const billableByRole = new Map<number, number>()
+        const commercialByRole = new Map<number, number | null>()
+        const actualByRole = new Map<number, number | null>()
+        const billingStatusByRole = new Map<number, boolean>()
         for (const role of exportRoles) {
-          // Phase-scoped roles are not counted per item.
-          mandayByRole.set(
-            role.id,
-            role.scope === 'phase'
-              ? 0
-              : (mandayOf.get(`${item.id}_${role.id}`) ?? 0),
-          )
+          const cell = mandayOf.get(`${item.id}_${role.id}`)
+          const phaseRole = matrixBacked && role.scope === 'phase'
+          const explicit = cell?.explicitEffort || (phase.deliveryProfile === 'self_dev' && cell?.overridden)
+          const md = phaseRole && (!explicitPhaseRoles.has(role.id) || !explicit) ? 0 : cell?.manday ?? 0
+          mandayByRole.set(role.id, md)
+          billableByRole.set(role.id, cell?.billable === false ? 0 : md)
+          commercialByRole.set(role.id, cell?.commercialManday ?? null)
+          actualByRole.set(role.id, cell?.actualManday ?? null)
+          billingStatusByRole.set(role.id, cell?.billable ?? true)
         }
         return {
           id: item.id,
           detail: item.detail,
           activityLabel: activity ? `${activity.code} ${activity.name}` : null,
-          countUnit: activity?.countUnit ?? null,
+          countUnit: matrixBacked ? activity?.countUnit ?? null : item.countUnit ?? activity?.countUnit ?? 'ต่อรายการ',
           complexity: item.complexity,
           qty: item.qty,
           dueDatePlan: item.dueDatePlan,
           deliverables: item.deliverables,
           mandayByRole,
+          billableByRole, commercialByRole, actualByRole, billingStatusByRole,
+          sourceReference: item.sourceReference,
+          baselineConfirmed: item.baselineConfirmed,
+          complexityFacts: item.complexityFacts,
           total: round2([...mandayByRole.values()].reduce((s, v) => s + v, 0)),
         }
       })
 
-    // The Developer man-days of this phase drive every phase-scoped role.
-    const devManday = round2(
-      items.reduce(
+    return {
+      id: phase.id,
+      name: phase.name,
+      deliveryProfile: phase.deliveryProfile,
+      items,
+      derivedByRole: new Map(),
+      devManday: 0,
+      total: 0,
+    }
+  })
+
+  const representedAnswers = new Set(
+    detail.items
+      .filter((item) => item.activityId != null)
+      .map((item) => `${item.activityId}_${item.complexity}`),
+  )
+  let nextVirtualPhaseId = -1
+  let nextVirtualItemId = -1
+
+  for (const topic of detail.survey?.topics ?? []) {
+    const activity = activityById.get(topic.activityId)
+    if (!activity) continue
+
+    for (const complexity of ['L', 'M', 'H'] as const) {
+      const answer = detail.activityQty.get(`${topic.activityId}_${complexity}`)
+      if (!answer || answer.qty <= 0) continue
+
+      const answerKey = `${topic.activityId}_${complexity}`
+      if (representedAnswers.has(answerKey)) continue
+      representedAnswers.add(answerKey)
+
+      const qty =
+        activity.countUnit === ONCE_PER_PROJECT_UNIT ? 1 : answer.qty
+      const detailText =
+        answer.detail?.trim() ||
+        defaultItemDetail(activity.name, activity.countUnit, qty)
+      const phaseName = activity.groupName ?? activity.name
+      let phase = phases.find((candidate) => candidate.name === phaseName)
+
+      if (!phase) {
+        phase = {
+          id: nextVirtualPhaseId--,
+          name: phaseName,
+          deliveryProfile: 'legacy',
+          items: [],
+          derivedByRole: new Map(),
+          devManday: 0,
+          total: 0,
+        }
+        phases.push(phase)
+      }
+
+      const mandayByRole = new Map<number, number>()
+      for (const role of exportRoles) {
+        mandayByRole.set(
+          role.id,
+          !isMatrixProfile(phase.deliveryProfile) || role.scope === 'phase'
+            ? 0
+            : standardManday({
+                matrix,
+                activityId: activity.id,
+                role,
+                complexity,
+                qty,
+                stackMultiplier: detail.effectiveMultiplier,
+              }),
+        )
+      }
+
+      phase.items.push({
+        id: nextVirtualItemId--,
+        detail: detailText,
+        activityLabel: `${activity.code} ${activity.name}`,
+        countUnit: activity.countUnit,
+        complexity,
+        qty,
+        dueDatePlan: null,
+        deliverables: null,
+        mandayByRole,
+        billableByRole: new Map(mandayByRole),
+        commercialByRole: new Map(), actualByRole: new Map(),
+        billingStatusByRole: new Map(),
+        sourceReference: null, baselineConfirmed: false, complexityFacts: null,
+        total: round2(
+          [...mandayByRole.values()].reduce((sum, md) => sum + md, 0),
+        ),
+      })
+    }
+  }
+
+  for (const phase of phases) {
+    // Developer man-days of this phase drive every phase-scoped role.
+    phase.devManday = round2(
+      phase.items.reduce(
         (sum, item) =>
           sum +
           [...devRoleIds].reduce(
-            (s, id) => s + (item.mandayByRole.get(id) ?? 0),
+            (subtotal, id) => subtotal + (item.mandayByRole.get(id) ?? 0),
             0,
           ),
         0,
       ),
     )
 
-    const derivedByRole = new Map<number, number>()
     for (const role of exportRoles) {
+      if (!isMatrixProfile(phase.deliveryProfile)) continue
+      if (detail.mandays.some(m => m.roleId === role.id && (m.explicitEffort || (phase.deliveryProfile === 'self_dev' && m.overridden)) && detail.items.some(i => i.id === m.itemId && i.phaseId === phase.id))) continue
       if (role.scope !== 'phase' || !role.ratioOfDev) continue
-      derivedByRole.set(role.id, round2(devManday * role.ratioOfDev))
+      phase.derivedByRole.set(
+        role.id,
+        round2(phase.devManday * role.ratioOfDev),
+      )
     }
 
-    const itemTotal = items.reduce((s, i) => s + i.total, 0)
-    const derivedTotal = [...derivedByRole.values()].reduce((s, v) => s + v, 0)
-
-    return {
-      id: phase.id,
-      name: phase.name,
-      items,
-      derivedByRole,
-      devManday,
-      total: round2(itemTotal + derivedTotal),
-    }
-  })
+    const itemTotal = phase.items.reduce((sum, item) => sum + item.total, 0)
+    const derivedTotal = [...phase.derivedByRole.values()].reduce(
+      (sum, manday) => sum + manday,
+      0,
+    )
+    phase.total = round2(itemTotal + derivedTotal)
+  }
 
   const devTotal = round2(phases.reduce((s, p) => s + p.devManday, 0))
+  const hasDirectPhases = phases.some(p => !isMatrixProfile(p.deliveryProfile) && p.items.length > 0)
 
   const roles: SummaryRole[] = exportRoles.map((role) => {
     const pr = projectRoleById.get(role.id)
@@ -205,16 +326,15 @@ export function buildSummary(detail: ProjectDetail) {
       phases.reduce(
         (sum, phase) =>
           sum +
-          (role.scope === 'phase'
-            ? (phase.derivedByRole.get(role.id) ?? 0)
-            : phase.items.reduce(
+          (phase.derivedByRole.get(role.id) ?? 0) + phase.items.reduce(
                 (s, i) => s + (i.mandayByRole.get(role.id) ?? 0),
                 0,
-              )),
+              ),
         0,
       ),
     )
     const ratePerMd = pr?.ratePerMd ?? role.ratePerMd
+    const billableManday = round2(phases.reduce((sum, p) => sum + (p.derivedByRole.get(role.id) ?? 0) + p.items.reduce((s, i) => s + (i.billableByRole.get(role.id) ?? 0), 0), 0))
     return {
       id: role.id,
       code: role.code,
@@ -225,12 +345,13 @@ export function buildSummary(detail: ProjectDetail) {
       personName: pr?.personName ?? null,
       ratePerMd,
       manday,
-      cost: round2(manday * ratePerMd),
+      billableManday,
+      cost: round2(billableManday * ratePerMd),
       actualRatio:
         devTotal > 0 && !DEV_CODES.includes(role.code)
           ? Math.round((manday / devTotal) * 1000) / 1000
           : null,
-      targetRatio: role.ratioOfDev,
+      targetRatio: hasDirectPhases ? null : role.ratioOfDev,
     }
   })
 
@@ -238,6 +359,15 @@ export function buildSummary(detail: ProjectDetail) {
   const cost = round2(roles.reduce((s, r) => s + r.cost, 0))
   const bufferPercent = detail.project.bufferPercent
   const bufferAmount = round2((cost * bufferPercent) / 100)
+  const warnings: string[] = []
+  if (hasDirectPhases) warnings.push('กลุ่มงาน SAP / Vendor / Migration ลง MD รวมโดยตรง; ไม่ใช้เป้า ratio รวมทั้งโครงการ')
+  for (const phase of phases) {
+    if (!isMatrixProfile(phase.deliveryProfile) && phase.items.some(i => i.total === 0)) warnings.push(`${phase.name}: มีรายการยังไม่มี MD ที่ประเมิน (${profileLabel(phase.deliveryProfile)})`)
+    const codes = new Set(detail.items.filter(i => i.phaseId === phase.id).map(i => activityById.get(i.activityId ?? 0)?.code))
+    if (codes.has('1.2') && (codes.has('1.1') || codes.has('1.3'))) warnings.push(`${phase.name}: มีทั้ง CRUD + Import และ CRUD แยก; ตรวจว่าเป็นคนละขอบเขตงานเพื่อไม่ให้นับซ้ำ`)
+    if (codes.has('2') && codes.has('6')) warnings.push(`${phase.name}: ตรวจขอบเขต Data preparation ที่รวมใน Dashboard และ Migration ไม่ให้นับซ้ำ`)
+  }
+  for (const role of roles) if (role.billableManday > 0 && role.ratePerMd === 0) warnings.push(`${role.name}: มีแรงงานคิดเงินแต่ยังไม่ได้ระบุอัตรา/MD`)
 
   return {
     project: detail.project,
@@ -250,6 +380,8 @@ export function buildSummary(detail: ProjectDetail) {
     roles,
     devTotal,
     totalManday,
+    billableManday: round2(roles.reduce((sum, r) => sum + r.billableManday, 0)),
+    warnings,
     /** Cost before the contingency buffer. */
     cost,
     bufferPercent,
