@@ -33,6 +33,7 @@ export type SummaryRole = {
 
 export type SummaryItem = {
   id: number
+  pendingEstimation: boolean
   detail: string
   activityLabel: string | null
   countUnit: string | null
@@ -131,6 +132,7 @@ function buildSurvey(detail: ProjectDetail) {
 }
 
 export function buildSummary(detail: ProjectDetail) {
+  const estimatedItemIds = new Set(detail.mandays.filter(m => m.explicitEffort || m.overridden || m.manday > 0).map(m => m.itemId))
   const includedRoleIds = new Set(
     detail.projectRoles.filter((pr) => pr.included).map((pr) => pr.roleId),
   )
@@ -179,6 +181,7 @@ export function buildSummary(detail: ProjectDetail) {
         }
         return {
           id: item.id,
+          pendingEstimation: (!matrixBacked || item.activityId == null) && !item.baselineConfirmed && !estimatedItemIds.has(item.id),
           detail: item.detail,
           activityLabel: activity ? `${activity.code} ${activity.name}` : null,
           countUnit: matrixBacked ? activity?.countUnit ?? null : item.countUnit ?? activity?.countUnit ?? 'ต่อรายการ',
@@ -277,7 +280,7 @@ export function buildSummary(detail: ProjectDetail) {
         billableByRole: new Map(mandayByRole),
         commercialByRole: new Map(), actualByRole: new Map(),
         billingStatusByRole: new Map(),
-        sourceReference: null, baselineConfirmed: false, complexityFacts: null,
+        sourceReference: null, baselineConfirmed: false, complexityFacts: null, pendingEstimation: false,
         total: round2(
           [...mandayByRole.values()].reduce((sum, md) => sum + md, 0),
         ),
@@ -362,6 +365,9 @@ export function buildSummary(detail: ProjectDetail) {
   const warnings: string[] = []
   if (hasDirectPhases) warnings.push('กลุ่มงาน SAP / Vendor / Migration ลง MD รวมโดยตรง; ไม่ใช้เป้า ratio รวมทั้งโครงการ')
   for (const phase of phases) {
+    for (const item of phase.items) {
+      if (item.pendingEstimation) warnings.push(`${phase.name}: “${item.detail}” ยังไม่จับคู่ Matrix หรือประเมิน MD ตามบทบาท`)
+    }
     if (!isMatrixProfile(phase.deliveryProfile) && phase.items.some(i => i.total === 0)) warnings.push(`${phase.name}: มีรายการยังไม่มี MD ที่ประเมิน (${profileLabel(phase.deliveryProfile)})`)
     const codes = new Set(detail.items.filter(i => i.phaseId === phase.id).map(i => activityById.get(i.activityId ?? 0)?.code))
     if (codes.has('1.2') && (codes.has('1.1') || codes.has('1.3'))) warnings.push(`${phase.name}: มีทั้ง CRUD + Import และ CRUD แยก; ตรวจว่าเป็นคนละขอบเขตงานเพื่อไม่ให้นับซ้ำ`)

@@ -35,6 +35,8 @@ export default async function NewProjectPage() {
 
       <WizardSteps current={1} />
 
+      <p className="text-sm text-muted">มีรายการงานใน Excel แล้ว? <Link href="/projects/import" className="font-medium text-brand hover:underline">นำเข้าจาก Excel</Link></p>
+
       <ProjectForm
         project={null}
         techStacks={stacks}

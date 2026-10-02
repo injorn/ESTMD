@@ -45,6 +45,7 @@ export function StepItems({
     )
 
   const summary = buildSummary(detail)
+  const pendingIds = new Set(summary.phases.flatMap(p => p.items.filter(i => i.pendingEstimation).map(i => i.id)))
   const grandTotal = summary.totalManday
 
   return (
@@ -190,14 +191,15 @@ export function StepItems({
                       >
                         <td className="px-3 py-2">
                           <p className="whitespace-pre-line">{item.detail}</p>
-                          {readOnly ? <p className="mt-1 text-xs text-muted">{item.sourceReference ?? 'ยังไม่ระบุแหล่งอ้างอิง'}{item.baselineConfirmed ? ' · ยืนยัน Baseline แล้ว' : ''}</p> : <EvidenceForm item={item} profile={phase.deliveryProfile} roles={roles} cells={mandays} />}
+                          {pendingIds.has(item.id) ? <p className="mt-1 text-xs font-medium text-accent">รอประเมิน: จับคู่ Matrix หรือกรอก MD ตามบทบาท</p> : null}
+                          {readOnly ? <p className="mt-1 break-all text-xs text-muted">{item.sourceReference ?? 'ยังไม่ระบุแหล่งอ้างอิง'}{item.baselineConfirmed ? ' · ยืนยัน Baseline แล้ว' : ''}</p> : <EvidenceForm item={item} profile={phase.deliveryProfile} roles={roles} cells={mandays} activities={activities} />}
                         </td>
                         <td className="px-2 py-2 text-xs text-muted">
                           {activity ? `${activity.code} ${activity.name}` : '-'}
                         </td>
                         <td className="px-2 py-2 text-center">
                           <span className="chip bg-brand-soft text-brand">
-                            {item.complexity}
+                            {pendingIds.has(item.id) ? 'รอประเมิน' : item.complexity}
                           </span>
                         </td>
                         <td className="px-2 py-2 text-center">

@@ -117,7 +117,7 @@ export async function buildWorkbook(summary: Summary) {
     for (const item of phase.items) {
       const row = ws.getRow(rowIndex)
       row.getCell(1).value = phase.name
-      row.getCell(2).value = item.activityLabel
+      row.getCell(2).value = item.pendingEstimation ? `${item.detail} [รอประเมิน]` : item.activityLabel
         ? `${item.detail}\n[${item.activityLabel} · ${item.complexity}]`
         : `${item.detail} [${item.complexity}]`
       row.getCell(3).value = item.dueDatePlan ?? ''
@@ -568,7 +568,7 @@ export async function buildWorkbook(summary: Summary) {
   evidence.getRow(1).font = { bold: true }
   for (const phase of summary.phases) for (const item of phase.items) for (const role of roles) {
     evidence.addRow([phase.name, profileLabel(phase.deliveryProfile), item.detail, item.activityLabel,
-      item.complexity, item.qty, item.countUnit, role.name, item.mandayByRole.get(role.id) ?? 0,
+      item.pendingEstimation ? 'รอประเมิน' : item.complexity, item.qty, item.countUnit, role.name, item.pendingEstimation ? null : item.mandayByRole.get(role.id) ?? 0,
       item.commercialByRole.get(role.id) ?? null, item.actualByRole.get(role.id) ?? null,
       item.billingStatusByRole.get(role.id) === false ? 'No' : 'Yes',
       item.sourceReference, item.baselineConfirmed ? 'Yes' : 'No', item.complexityFacts])

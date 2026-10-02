@@ -5,6 +5,7 @@ import { saveDeliveryProfile, saveEvidence, saveRoleEffort } from '@/lib/actions
 import { saveItem, type ActionState } from '@/lib/actions/project'
 import { PROFILE_OPTIONS, isMatrixProfile, type DeliveryProfile } from '@/lib/delivery-profiles'
 import type { ProjectDetail } from '@/lib/queries'
+import { ONCE_PER_PROJECT_UNIT, type Activity } from '@/lib/db/schema'
 
 function Feedback({ state }: { state: ActionState }) {
   return state.error ? <p role="alert" className="text-xs text-danger">{state.error}</p>
@@ -30,13 +31,15 @@ export function ProfileForm({ projectId, phaseId, profile }: { projectId: number
 }
 
 type Item = ProjectDetail['items'][number]
-export function EvidenceForm({ item, profile, roles, cells }: {
-  item: Item; profile: DeliveryProfile; roles: ProjectDetail['roles']; cells: ProjectDetail['mandays']
+export function EvidenceForm({ item, profile, roles, cells, activities }: {
+  item: Item; profile: DeliveryProfile; roles: ProjectDetail['roles']; cells: ProjectDetail['mandays']; activities: Activity[]
 }) {
   const [state, action, pending] = useActionState(saveEvidence, {})
   const [effortState, effortAction, savingEffort] = useActionState(saveRoleEffort, {})
   const [editState, editAction, savingItem] = useActionState(saveItem, {})
   const [roleId, setRoleId] = useState(roles[0]?.id ?? 0)
+  const [activityId, setActivityId] = useState(item.activityId ?? 0)
+  const once = isMatrixProfile(profile) && activities.find(a => a.id === activityId)?.countUnit === ONCE_PER_PROJECT_UNIT
   const cell = cells.find(c => c.itemId === item.id && c.roleId === roleId)
   return <details className="mt-2 text-xs">
     <summary className="cursor-pointer font-medium text-brand">แก้รายการ / แรงงาน / แหล่งอ้างอิง</summary>
@@ -45,14 +48,15 @@ export function EvidenceForm({ item, profile, roles, cells }: {
         <input type="hidden" name="id" value={item.id} />
         <input type="hidden" name="projectId" value={item.projectId} />
         <input type="hidden" name="phaseId" value={item.phaseId} />
-        <input type="hidden" name="activityId" value={item.activityId ?? ''} />
-        <input type="hidden" name="dueDatePlan" value={item.dueDatePlan ?? ''} />
-        <input type="hidden" name="deliverables" value={item.deliverables ?? ''} />
         <label className="block">รายละเอียดงาน<textarea name="detail" required defaultValue={item.detail} className="field mt-1" /></label>
+        <label className="block">กิจกรรม Matrix<select name="activityId" value={activityId || ''} onChange={e => setActivityId(Number(e.target.value))} className="field mt-1"><option value="">ยังไม่จับคู่ / ลง MD เอง</option>{activities.filter(a => a.active || a.id === item.activityId).map(a => <option key={a.id} value={a.id}>{a.code} {a.name}</option>)}</select></label>
         <div className="flex gap-2">
           <label>ระดับ<select name="complexity" defaultValue={item.complexity} className="field mt-1">{['L', 'M', 'H'].map(l => <option key={l}>{l}</option>)}</select></label>
-          <label>จำนวน<input name="qty" type="number" min="0" step="0.01" defaultValue={item.qty} className="field mt-1" /></label>
+          <label>จำนวน{once ? <><input type="hidden" name="qty" value="1" /><input aria-label="จำนวน ต่อโครงการ" value="1" readOnly className="field mt-1" /></> : <input name="qty" type="number" required min="0" step="0.01" defaultValue={item.qty} className="field mt-1" />}</label>
         </div>
+        {once ? <p className="text-muted">กิจกรรมนี้นับครั้งเดียวต่อโครงการ: จำนวน 1</p> : null}
+        <label className="block">สิ่งส่งมอบ<textarea name="deliverables" defaultValue={item.deliverables ?? ''} className="field mt-1" /></label>
+        <label className="block">กำหนดส่ง<input name="dueDatePlan" defaultValue={item.dueDatePlan ?? ''} className="field mt-1" /></label>
         <button type="submit" disabled={savingItem} className="btn-ghost">{savingItem ? 'กำลังบันทึก…' : 'บันทึกรายการ'}</button>
         <Feedback state={editState} />
       </form>

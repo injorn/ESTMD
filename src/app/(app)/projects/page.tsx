@@ -26,9 +26,9 @@ export default async function ProjectsPage() {
           </p>
         </div>
         {user.role === 'viewer' ? null : (
-          <Link href="/projects/new" className="btn-primary">
+          <div className="flex flex-wrap gap-2"><Link href="/projects/import" className="btn-ghost">นำเข้าจาก Excel</Link><Link href="/projects/new" className="btn-primary">
             + สร้างโครงการ
-          </Link>
+          </Link></div>
         )}
       </div>
 

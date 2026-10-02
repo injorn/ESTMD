@@ -16,7 +16,8 @@
     "test:upgrade": "node scripts/test-upgrade.cjs",
     "matrix:build": "node scripts/build-matrix.cjs",
     "db:evidence-roles": "node scripts/seed-evidence-roles.cjs",
-    "test:profiles": "node --conditions=react-server --import tsx --test scripts/test-delivery-profiles.ts"
+    "test:profiles": "node --conditions=react-server --import tsx --test scripts/test-delivery-profiles.ts",
+    "test:import": "node --conditions=react-server --import tsx --test scripts/test-excel-import.ts"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",

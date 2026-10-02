@@ -232,7 +232,7 @@ export function SummaryView({ summary }: { summary: Summary }) {
                       ) : null}
                       <td className="px-3 py-2">
                         <span className="whitespace-pre-line">{item.detail}</span>
-                        <span className="mt-1 block text-xs text-muted">{item.qty} {item.countUnit ?? 'ต่อรายการ'} · {item.baselineConfirmed ? 'ยืนยัน Baseline' : 'ยังไม่ยืนยัน Baseline'}{item.sourceReference ? ` · ${item.sourceReference}` : ''}</span>
+                        <span className="mt-1 block break-words text-xs text-muted">{item.qty} {item.countUnit ?? 'ต่อรายการ'} · {item.baselineConfirmed ? 'ยืนยัน Baseline' : 'ยังไม่ยืนยัน Baseline'}{item.sourceReference ? ` · ${item.sourceReference}` : ''}</span>
                         {item.activityLabel ? (
                           <span className="mt-0.5 block text-xs text-muted">
                             {item.activityLabel}
@@ -240,7 +240,7 @@ export function SummaryView({ summary }: { summary: Summary }) {
                         ) : null}
                       </td>
                       <td className="px-2 py-2 text-center text-xs">
-                        {item.complexity}
+                        {item.pendingEstimation ? 'รอประเมิน' : item.complexity}
                       </td>
                       {roles.map((role) => {
                         const v = item.mandayByRole.get(role.id) ?? 0
