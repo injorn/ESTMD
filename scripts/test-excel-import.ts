@@ -12,6 +12,31 @@ import { buildSummary } from '../src/lib/summary'
 import { buildWorkbook } from '../src/lib/excel'
 import { boundedBody, importErrorResponse } from '../src/lib/excel-import/http'
 import { saveItemEvidence, saveEffortCell } from '../src/lib/effort-store'
+import { buildImportTemplate } from '../src/lib/excel-import/template'
+
+test('download template has blank input, separate examples, and headers recognized by importer', async () => {
+  const workbook = buildImportTemplate()
+  const book = await readImportWorkbook(Buffer.from(await workbook.xlsx.writeBuffer()), 'Manday_Import_Template.xlsx')
+  assert.equal(book.sheets[0].name, 'รายการงาน')
+  const blank = mapSheetRows(book.sheets[0], suggestMapping(book.sheets[0]))
+  assert.equal(blank.length, 0, 'Example tasks do not pollute the input sheet')
+  const examples = book.sheets.find(sheet => sheet.name === 'ตัวอย่าง')!
+  const mapping = suggestMapping(examples)
+  assert.deepEqual([mapping.phaseColumn, mapping.detailColumn, mapping.qtyColumn, mapping.deliverablesColumn, mapping.dueDateColumn], [1, 2, 3, 4, 5])
+  const rows = mapSheetRows(examples, mapping)
+  assert.equal(rows.length, 3)
+  assert.ok(rows.every(row => row.selected && row.qty != null && row.warnings.length === 0 && row.activityId == null))
+  assert.equal(rows[0].dueDatePlan, '2026-10-15')
+  assert.ok(book.sheets.some(sheet => sheet.name === 'วิธีใช้'))
+  const input = workbook.getWorksheet('รายการงาน')!
+  assert.equal(input.getCell('C2').dataValidation.type, 'decimal')
+  assert.equal(input.getCell('C1001').dataValidation.type, 'decimal')
+  input.getCell('A2').value = 'งานจริง'
+  input.getCell('B2').value = 'รายการที่กรอกเอง'
+  input.getCell('C2').value = 1
+  const filled = await readImportWorkbook(Buffer.from(await workbook.xlsx.writeBuffer()), 'filled.xlsx')
+  assert.equal(mapSheetRows(filled.sheets[0], suggestMapping(filled.sheets[0]))[0].detail, 'รายการที่กรอกเอง')
+})
 
 async function fixture() {
   const book = new ExcelJS.Workbook()

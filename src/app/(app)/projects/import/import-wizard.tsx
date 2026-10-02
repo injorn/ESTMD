@@ -89,6 +89,7 @@ export function ImportWizard({ activities, stacks }: { activities: Activity[]; s
   const phases = [...new Set(rows.filter(row => row.selected).map(row => row.phase.trim()).filter(Boolean))]
   const selectedCount = rows.filter(row => row.selected).length
   return <div className="space-y-4" aria-busy={busy}>
+    <div className="card flex flex-wrap items-center justify-between gap-3 p-4"><div><p className="text-sm font-medium">ยังไม่มีไฟล์รายการงาน?</p><p className="mt-1 text-xs text-muted">ดาวน์โหลด Template มีชีตกรอกงาน ตัวอย่าง และวิธีใช้ พร้อมหัวคอลัมน์ที่ระบบอ่านได้</p></div><a href="/api/projects/import/template" className="btn-ghost">ดาวน์โหลด Template พร้อมตัวอย่าง</a></div>
     <ol aria-label="ขั้นตอนนำเข้า" className="flex flex-wrap gap-3 text-sm">{[['upload', '1. อัปโหลด'], ['map', '2. เลือกตาราง'], ['review', '3. ตรวจและนำเข้า']].map(([key, label]) => <li key={key} aria-current={stage === key ? 'step' : undefined} className={`rounded-md border px-3 py-2 ${stage === key ? 'border-brand bg-brand-soft font-medium text-brand' : 'border-line text-muted'}`}>{label}</li>)}</ol>
     {error ? <p id="import-error" role="alert" className="card border-danger/40 p-4 text-sm text-danger">{error}</p> : null}
     {busy ? <p role="status" className="text-sm text-brand">{stage === 'upload' ? 'กำลังอ่านไฟล์ Excel…' : 'กำลังสร้างโครงการ…'}</p> : null}
