@@ -3,8 +3,9 @@ import 'server-only'
 import ExcelJS from 'exceljs'
 
 import { STANDARD } from './standard'
-import type { Summary } from './summary'
-import { profileLabel } from './delivery-profiles'
+import type { Summary, SummaryItem } from './summary'
+import { isMatrixProfile, profileLabel, type DeliveryProfile } from './delivery-profiles'
+import { criteriaSnapshot } from './estimation-ai/policy'
 
 /**
  * Builds the estimation workbook in the layout of PTT-PSSR-Online_Manday.xlsx
@@ -23,6 +24,16 @@ import { profileLabel } from './delivery-profiles'
  * shared summary model. The workbook also keeps a "Questionnaire" sheet with
  * the survey as answered and a "Basis of Estimate" sheet with assumptions.
  */
+function workLevelDetails(item: SummaryItem, profile: DeliveryProfile) {
+  if (item.pendingEstimation) return 'รอประเมิน'
+  if (!isMatrixProfile(profile)) return 'ลง MD ตามบทบาท ไม่ใช้เกณฑ์ L/M/H ของ Matrix'
+  const snapshot = item.activityCode ? criteriaSnapshot(item.activityCode) : null
+  const levelKey = { L: 'low', M: 'medium', H: 'high' } as const
+  return snapshot?.integrationReady && snapshot.source
+    ? snapshot.source[levelKey[item.complexity]]
+    : 'ยังไม่มีเกณฑ์เฉพาะที่ตรงกับกิจกรรมนี้ ให้ผู้ประเมินอ้างอิงมาตรฐานของทีมและระบุเหตุผลประกอบระดับที่เลือก'
+}
+
 const HEADERS = ['Phase', 'Details', 'Due Date Plan', 'Deliverables'] as const
 const FIRST_ROLE_COL = HEADERS.length + 1 // column E
 const BRAND = 'FF00327B'
@@ -117,9 +128,8 @@ export async function buildWorkbook(summary: Summary) {
     for (const item of phase.items) {
       const row = ws.getRow(rowIndex)
       row.getCell(1).value = phase.name
-      row.getCell(2).value = item.pendingEstimation ? `${item.detail} [รอประเมิน]` : item.activityLabel
-        ? `${item.detail}\n[${item.activityLabel} · ${item.complexity}]`
-        : `${item.detail} [${item.complexity}]`
+      row.getCell(2).value = item.pendingEstimation ? `${item.detail} [รอประเมิน]`
+        : `${item.detail} [${item.complexity}]\n\nเกณฑ์ระดับงาน:\n${workLevelDetails(item, phase.deliveryProfile)}`
       row.getCell(3).value = item.dueDatePlan ?? ''
       row.getCell(4).value = item.deliverables ?? ''
 
@@ -558,7 +568,7 @@ export async function buildWorkbook(summary: Summary) {
   const evidence = wb.addWorksheet('Effort Evidence', { views: [{ state: 'frozen', ySplit: 1 }] })
   evidence.columns = [
     { header: 'Phase', width: 24 }, { header: 'Delivery profile', width: 26 },
-    { header: 'Details', width: 45 }, { header: 'Activity', width: 30 },
+    { header: 'Details', width: 45 }, { header: 'เกณฑ์ระดับงาน', width: 60 },
     { header: 'Level', width: 8 }, { header: 'Qty', width: 10 }, { header: 'Unit', width: 20 },
     { header: 'Role', width: 24 }, { header: 'Baseline MD', width: 16 },
     { header: 'Commercial MD', width: 18 }, { header: 'Actual MD', width: 16 },
@@ -567,7 +577,7 @@ export async function buildWorkbook(summary: Summary) {
   ]
   evidence.getRow(1).font = { bold: true }
   for (const phase of summary.phases) for (const item of phase.items) for (const role of roles) {
-    evidence.addRow([phase.name, profileLabel(phase.deliveryProfile), item.detail, item.activityLabel,
+    evidence.addRow([phase.name, profileLabel(phase.deliveryProfile), item.detail, workLevelDetails(item, phase.deliveryProfile),
       item.pendingEstimation ? 'รอประเมิน' : item.complexity, item.qty, item.countUnit, role.name, item.pendingEstimation ? null : item.mandayByRole.get(role.id) ?? 0,
       item.commercialByRole.get(role.id) ?? null, item.actualByRole.get(role.id) ?? null,
       item.billingStatusByRole.get(role.id) === false ? 'No' : 'Yes',

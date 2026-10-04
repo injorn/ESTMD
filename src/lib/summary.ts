@@ -36,6 +36,7 @@ export type SummaryItem = {
   pendingEstimation: boolean
   detail: string
   activityLabel: string | null
+  activityCode?: string | null
   countUnit: string | null
   complexity: 'L' | 'M' | 'H'
   qty: number
@@ -184,6 +185,7 @@ export function buildSummary(detail: ProjectDetail) {
           pendingEstimation: (!matrixBacked || item.activityId == null) && !item.baselineConfirmed && !estimatedItemIds.has(item.id),
           detail: item.detail,
           activityLabel: activity ? `${activity.code} ${activity.name}` : null,
+          activityCode: activity?.code ?? null,
           countUnit: matrixBacked ? activity?.countUnit ?? null : item.countUnit ?? activity?.countUnit ?? 'ต่อรายการ',
           complexity: item.complexity,
           qty: item.qty,
@@ -271,6 +273,7 @@ export function buildSummary(detail: ProjectDetail) {
         id: nextVirtualItemId--,
         detail: detailText,
         activityLabel: `${activity.code} ${activity.name}`,
+        activityCode: activity.code,
         countUnit: activity.countUnit,
         complexity,
         qty,
