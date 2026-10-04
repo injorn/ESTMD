@@ -1,0 +1,78 @@
+{
+  "Performance Tuning": {
+    "unit": "ต่อขอบเขตคอขวด / acceptance target เดียว",
+    "roles": {
+      "SA": [
+        0.5,
+        1,
+        2
+      ],
+      "DEV_SR": [
+        0.5,
+        1,
+        2
+      ],
+      "DEV": [
+        2,
+        4,
+        8
+      ],
+      "TESTER": [
+        1,
+        2,
+        3
+      ]
+    },
+    "assumptions": "รวมวิเคราะห์คอขวด ปรับวิธีทำงาน และ benchmark/regression เฉพาะขอบเขตนี้; baseline และ environment พร้อม; รวม baseline test และ confirmation test 1 รอบหลังแก้ ไม่รวม full load-test campaign หรือเปลี่ยน architecture ทั้งระบบ",
+    "basis": "ประมาณแรงงานวิเคราะห์ + ลงมือแก้ + ยืนยันผล เทียบขนาดงาน Report/Job ใน Matrix เดิม; ไม่ใช่การถอด MD ที่ใช้จริงจาก Excel"
+  },
+  "Performance / Load Test": {
+    "unit": "ต่อ test campaign / ชุด workload ที่ตกลง",
+    "roles": {
+      "SA": [
+        0.5,
+        1,
+        1.5
+      ],
+      "DEV_SR": [
+        0,
+        0.5,
+        1
+      ],
+      "TESTER": [
+        2,
+        3.5,
+        6
+      ],
+      "INFRA": [
+        0.5,
+        1,
+        1.5
+      ]
+    },
+    "assumptions": "รวมแผน workload/script เตรียม test data รัน baseline + confirmation รวม 2 รอบ วิเคราะห์และทำรายงาน; มี environment และเครื่องมือพร้อม; ไม่รวมแก้ code, ซื้อ/ตั้งระบบทดสอบใหม่ หรือ retest เกิน 2 รอบ",
+    "basis": "ใช้แรงงานสร้าง script + รัน/วิเคราะห์ผลเป็นฐาน เทียบ Activity 11.1/11.3 และเพิ่มการสนับสนุนระบบทดสอบ; เป็นข้อเสนอเริ่มต้น"
+  },
+  "Training / Knowledge Transfer": {
+    "unit": "ต่อ session 4 ชั่วโมง / ผู้สอนหลัก 1 คน",
+    "roles": {
+      "BA": [
+        1,
+        1.5,
+        2
+      ],
+      "TESTER": [
+        0,
+        0.5,
+        0.5
+      ],
+      "DEV_SR": [
+        0,
+        0,
+        0.5
+      ]
+    },
+    "assumptions": "1 MD = 8 ชั่วโมง; รวมสอน 0.5 MD โดยผู้สอนหลักและการเตรียม session: L 0.5, M 1.5, H 2.5 MD; material หลักมีแล้ว; ไม่รวมจัดทำคู่มือใหม่หรือเดินทาง; technical trainer ใช้บทบาทจริงแทนผู้สอนหลัก ไม่บวกคนซ้ำ",
+    "basis": "ประมาณจากเวลาสอน 4 ชั่วโมงและเวลาเตรียม/ตั้งข้อมูล/ผู้เชี่ยวชาญประกอบ; การทำคู่มือเดิม 15.1 แยกต่างหาก"
+  }
+}

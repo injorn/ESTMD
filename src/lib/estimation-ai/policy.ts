@@ -1,8 +1,9 @@
 import { createHash } from 'node:crypto'
 import { LEVEL_DEF } from '../work-level-criteria'
 import { STANDARD } from '../standard'
+import { reviewedCriterion, criterionText } from '../estimation/catalog'
 
-export const CRITERIA_VERSION = 'level-def-2026-10-01-v1'
+export const CRITERIA_VERSION = 'level-def-2026-10-04-v2'
 export const CRUD_CRITERIA_VERSION = 'matrix-v3-crud-2026-10-01-v1'
 export type Level = 'L' | 'M' | 'H'
 export type Facts = Record<string, number | boolean | undefined>
@@ -75,6 +76,19 @@ export function evaluateCriteria(code: string, facts: Facts) {
   return { status: level ? 'resolved' as const : 'needs_review' as const, level, unresolved, evidence }
 }
 
+/** Render the inclusive ranges used by evaluation, without overlapping levels. */
+function describeFactors(factors: readonly Factor[], level: Level) {
+  return factors.flatMap(factor => {
+    if (!factor.limits) return factor.yes === level ? [`- ${factor.label}`] : []
+    const [low, medium, high] = factor.limits
+    const start = level === 'L' ? (['drillDown', 'fields', 'records', 'changes', 'externalSystems'].includes(factor.key) ? 0 : 1) : level === 'M' ? low + 1 : medium + 1
+    const end = level === 'L' ? low : level === 'M' ? medium : high
+    if (end !== undefined && start > end) return []
+    const range = end === undefined ? `มากกว่า ${medium}` : start === end ? `${start}` : `${start}–${end}`
+    return [`- ${factor.label}: ${range}`]
+  }).join('\n') || 'ไม่มีปัจจัยเฉพาะระดับนี้'
+}
+
 export function criteriaSnapshot(code: string) {
   if (['1.1', '1.2', '1.3'].includes(code)) return {
     version: CRUD_CRITERIA_VERSION, code, sourceCode: 'matrix-v3-crud', integrationReady: true,
@@ -83,8 +97,18 @@ export function criteriaSnapshot(code: string) {
     factors: CRITERIA['matrix-v3-crud'], decision: 'highest-factor; all-actions-including-import; missing-needs-review', newProject: null,
   }
   const sourceCode = code === '15.1' ? '11.2' : code
-  const source = LEVEL_DEF.find(row => (row.num !== null ? String(row.num) : row.topic.split(' ')[0]) === sourceCode)
+  const reviewed = reviewedCriterion(code)
+  if (!CRITERIA[sourceCode] && reviewed && code !== '11.2') return {
+    version: 'reviewed-scope-2026-10-04', code, sourceCode: code, integrationReady: true,
+    source: { topic: reviewed.title, low: criterionText(code, 'L')!, medium: criterionText(code, 'M')!, high: criterionText(code, 'H')! },
+    factors: [] as Factor[], decision: 'qualitative-review-with-evidence; no-automatic-level', newProject: null,
+  }
+  const legacySource = LEVEL_DEF.find(row => (row.num !== null ? String(row.num) : row.topic.split(' ')[0]) === sourceCode)
   const integrationReady = !['1.1', '1.2', '1.3', '11.2'].includes(code) && !!CRITERIA[sourceCode]
+  const source = integrationReady && legacySource ? {
+    ...legacySource, low: describeFactors(CRITERIA[sourceCode], 'L'),
+    medium: describeFactors(CRITERIA[sourceCode], 'M'), high: describeFactors(CRITERIA[sourceCode], 'H'),
+  } : undefined
   return { version: CRITERIA_VERSION, code, sourceCode, source, integrationReady,
     factors: integrationReady ? CRITERIA[sourceCode] : [], decision: 'highest-factor; missing-or-uncovered-needs-review',
     newProject: code.startsWith('10.') ? { forms: { M: '1–10', H: '>10' } } : null }

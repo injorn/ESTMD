@@ -10,6 +10,7 @@ import os from 'node:os'
 import path from 'node:path'
 import { buildSummary } from '../src/lib/summary'
 import { buildWorkbook } from '../src/lib/excel'
+import { criteriaSnapshot } from '../src/lib/estimation-ai/policy'
 import { boundedBody, importErrorResponse } from '../src/lib/excel-import/http'
 import { saveItemEvidence, saveEffortCell } from '../src/lib/effort-store'
 import { buildImportTemplate } from '../src/lib/excel-import/template'
@@ -167,6 +168,16 @@ test('creates mixed-profile draft atomically, calculates new Matrix MD and expor
   await exported.xlsx.load(await workbook.xlsx.writeBuffer())
   const texts = exported.getWorksheet('PTTDigital_Manday')!.getSheetValues().flat(Infinity)
   assert.ok(texts.some(v => typeof v === 'string' && v.includes('หน้าจอเข้าสู่ระบบ')))
+  assert.ok(!texts.some(v => typeof v === 'string' && v.includes('1.1 CRUD')))
+  assert.ok(texts.some(v => typeof v === 'string' && v.includes('หน้าจอเข้าสู่ระบบ') && v.includes('เกณฑ์ระดับงาน:') && v.includes(criteriaSnapshot('1.1').source!.high)))
+  const evidence = exported.getWorksheet('Effort Evidence')!
+  assert.equal(evidence.getCell('D1').value, 'เกณฑ์ระดับงาน')
+  const evidenceRows = evidence.getRows(2, evidence.rowCount - 1)!
+  const matrixRow = evidenceRows.find(row => row.getCell(3).value === 'หน้าจอเข้าสู่ระบบ')!
+  assert.equal(matrixRow.getCell(4).value, criteriaSnapshot('1.1').source!.high)
+  assert.ok(!exported.worksheets.flatMap(sheet => sheet.getSheetValues().flat(Infinity)).some(value => typeof value === 'string' && value.includes('เวอร์ชันเกณฑ์:')))
+  assert.equal(evidenceRows.find(row => row.getCell(3).value === 'ยังไม่จับคู่')!.getCell(4).value, 'รอประเมิน')
+  assert.equal(evidenceRows.find(row => row.getCell(3).value === 'ตรวจงาน Vendor')!.getCell(4).value, 'รอประเมิน')
   assert.ok(texts.some(v => typeof v === 'string' && v.includes('ยังไม่จับคู่') && v.includes('รอประเมิน')))
   assert.ok(exported.getWorksheet('Effort Evidence')!.getSheetValues().flat(Infinity).some(v => typeof v === 'string' && v.includes('estimate.xlsx')))
   sql.close()

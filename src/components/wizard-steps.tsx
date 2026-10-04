@@ -2,7 +2,7 @@ import Link from 'next/link'
 
 export const WIZARD_STEPS = [
   { step: 1, label: 'ข้อมูลโครงการ' },
-  { step: 2, label: 'Questionnaire' },
+  { step: 2, label: 'ขอบเขต & Questionnaire' },
   { step: 3, label: 'Key รายการ' },
   { step: 4, label: 'ทีม & อัตรา' },
   { step: 5, label: 'สรุป & Export' },

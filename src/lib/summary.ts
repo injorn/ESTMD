@@ -8,6 +8,7 @@ import {
 } from './estimate'
 import { ONCE_PER_PROJECT_UNIT } from './db/schema'
 import type { ProjectDetail } from './queries'
+import { assessmentIsCurrent, DIMENSIONS, type Assessment } from './estimation/catalog'
 import { isMatrixProfile, profileLabel, type DeliveryProfile } from './delivery-profiles'
 
 /** Roles whose man-days are the sizing basis every ratio is measured against. */
@@ -36,6 +37,9 @@ export type SummaryItem = {
   pendingEstimation: boolean
   detail: string
   activityLabel: string | null
+  activityCode?: string | null
+  dimensionIds?: number[]
+  assessment?: Assessment | null
   countUnit: string | null
   complexity: 'L' | 'M' | 'H'
   qty: number
@@ -184,6 +188,9 @@ export function buildSummary(detail: ProjectDetail) {
           pendingEstimation: (!matrixBacked || item.activityId == null) && !item.baselineConfirmed && !estimatedItemIds.has(item.id),
           detail: item.detail,
           activityLabel: activity ? `${activity.code} ${activity.name}` : null,
+          activityCode: activity?.code ?? null,
+          dimensionIds: item.dimensionIds,
+          assessment: assessmentIsCurrent(item.assessment, item, activity?.code ?? '') ? item.assessment : null,
           countUnit: matrixBacked ? activity?.countUnit ?? null : item.countUnit ?? activity?.countUnit ?? 'ต่อรายการ',
           complexity: item.complexity,
           qty: item.qty,
@@ -271,6 +278,7 @@ export function buildSummary(detail: ProjectDetail) {
         id: nextVirtualItemId--,
         detail: detailText,
         activityLabel: `${activity.code} ${activity.name}`,
+        activityCode: activity.code,
         countUnit: activity.countUnit,
         complexity,
         qty,
@@ -374,9 +382,19 @@ export function buildSummary(detail: ProjectDetail) {
     if (codes.has('2') && codes.has('6')) warnings.push(`${phase.name}: ตรวจขอบเขต Data preparation ที่รวมใน Dashboard และ Migration ไม่ให้นับซ้ำ`)
   }
   for (const role of roles) if (role.billableManday > 0 && role.ratePerMd === 0) warnings.push(`${role.name}: มีแรงงานคิดเงินแต่ยังไม่ได้ระบุอัตรา/MD`)
+  for (const scope of detail.scopeDimensions ?? []) {
+    const dimension = DIMENSIONS.find(d => d.no === scope.dimension)!
+    const linked = detail.items.some(i => i.dimensionIds.includes(scope.dimension))
+    if (scope.status === 'in_scope' && !linked) warnings.push(`${dimension.name}: มีงานในขอบเขตแต่ยังไม่มีรายการงานผูกกับมิตินี้`)
+    if (scope.status === 'out_of_scope' && linked) warnings.push(`${dimension.name}: มีรายการงานแต่ระบุว่าไม่มีงานในขอบเขต`)
+  }
+  const unknownDimensions = DIMENSIONS.filter(d => !detail.scopeDimensions?.some(s => s.dimension === d.no && s.status !== 'needs_info'))
+  if (unknownDimensions.length) warnings.push(`ขอบเขตยังรอข้อมูล ${unknownDimensions.length}/11 มิติ: ${unknownDimensions.map(d => d.name).join(', ')}`)
+  for (const item of detail.items) if (item.assessment && !assessmentIsCurrent(item.assessment, item, detail.activities.find(a => a.id === item.activityId)?.code ?? '')) warnings.push(`${item.detail}: รายละเอียดหรือระดับเปลี่ยนหลังยืนยันเกณฑ์ ต้องทบทวนใหม่`)
 
   return {
     project: detail.project,
+    scopeDimensions: detail.scopeDimensions ?? [],
     survey: buildSurvey(detail),
     stack: detail.stack,
     stackMultiplier: detail.stackMultiplier,

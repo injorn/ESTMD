@@ -3,8 +3,10 @@ import 'server-only'
 import ExcelJS from 'exceljs'
 
 import { STANDARD } from './standard'
-import type { Summary } from './summary'
-import { profileLabel } from './delivery-profiles'
+import type { Summary, SummaryItem } from './summary'
+import { isMatrixProfile, profileLabel, type DeliveryProfile } from './delivery-profiles'
+import { criteriaSnapshot } from './estimation-ai/policy'
+import { DIMENSIONS, SCOPE_STATES, criterionText } from './estimation/catalog'
 
 /**
  * Builds the estimation workbook in the layout of PTT-PSSR-Online_Manday.xlsx
@@ -31,6 +33,17 @@ const TOTAL_FILL = 'FFFFF3CD'
 
 const thin = { style: 'thin' as const, color: { argb: 'FFBFCBD9' } }
 const border = { top: thin, left: thin, bottom: thin, right: thin }
+
+function workLevelDetails(item: SummaryItem, profile: DeliveryProfile) {
+  if (item.pendingEstimation) return 'รอประเมิน'
+  if (!isMatrixProfile(profile)) return 'ลง MD ตามบทบาท ไม่ใช้เกณฑ์ L/M/H ของ Matrix'
+  if (item.assessment) return item.assessment.criterion
+  const snapshot = item.activityCode ? criteriaSnapshot(item.activityCode) : null
+  const levelKey = { L: 'low', M: 'medium', H: 'high' } as const
+  return snapshot?.integrationReady && snapshot.source
+    ? [...new Set([snapshot.source[levelKey[item.complexity]], item.activityCode ? criterionText(item.activityCode, item.complexity) : null].filter(Boolean))].join('\n\n')
+    : 'ยังไม่มีเกณฑ์เฉพาะที่ตรงกับกิจกรรมนี้ ให้ผู้ประเมินอ้างอิงมาตรฐานของทีมและระบุเหตุผลประกอบระดับที่เลือก'
+}
 
 export async function buildWorkbook(summary: Summary) {
   const wb = new ExcelJS.Workbook()
@@ -117,9 +130,9 @@ export async function buildWorkbook(summary: Summary) {
     for (const item of phase.items) {
       const row = ws.getRow(rowIndex)
       row.getCell(1).value = phase.name
-      row.getCell(2).value = item.pendingEstimation ? `${item.detail} [รอประเมิน]` : item.activityLabel
-        ? `${item.detail}\n[${item.activityLabel} · ${item.complexity}]`
-        : `${item.detail} [${item.complexity}]`
+      row.getCell(2).value = item.pendingEstimation
+        ? `${item.detail} [รอประเมิน]`
+        : `${item.detail} [${item.complexity}]\n\nเกณฑ์ระดับงาน:\n${workLevelDetails(item, phase.deliveryProfile)}`
       row.getCell(3).value = item.dueDatePlan ?? ''
       row.getCell(4).value = item.deliverables ?? ''
 
@@ -558,20 +571,23 @@ export async function buildWorkbook(summary: Summary) {
   const evidence = wb.addWorksheet('Effort Evidence', { views: [{ state: 'frozen', ySplit: 1 }] })
   evidence.columns = [
     { header: 'Phase', width: 24 }, { header: 'Delivery profile', width: 26 },
-    { header: 'Details', width: 45 }, { header: 'Activity', width: 30 },
+    { header: 'Details', width: 45 }, { header: 'เกณฑ์ระดับงาน', width: 60 },
     { header: 'Level', width: 8 }, { header: 'Qty', width: 10 }, { header: 'Unit', width: 20 },
     { header: 'Role', width: 24 }, { header: 'Baseline MD', width: 16 },
     { header: 'Commercial MD', width: 18 }, { header: 'Actual MD', width: 16 },
     { header: 'Billable', width: 12 }, { header: 'Source reference', width: 45 },
     { header: 'Baseline confirmed', width: 20 }, { header: 'Complexity facts', width: 45 },
+    { header: 'Dimensions', width: 45 }, { header: 'เหตุผลและข้อสมมติ', width: 45 },
   ]
   evidence.getRow(1).font = { bold: true }
   for (const phase of summary.phases) for (const item of phase.items) for (const role of roles) {
-    evidence.addRow([phase.name, profileLabel(phase.deliveryProfile), item.detail, item.activityLabel,
+    const criteria = workLevelDetails(item, phase.deliveryProfile)
+    evidence.addRow([phase.name, profileLabel(phase.deliveryProfile), item.detail, criteria,
       item.pendingEstimation ? 'รอประเมิน' : item.complexity, item.qty, item.countUnit, role.name, item.pendingEstimation ? null : item.mandayByRole.get(role.id) ?? 0,
       item.commercialByRole.get(role.id) ?? null, item.actualByRole.get(role.id) ?? null,
       item.billingStatusByRole.get(role.id) === false ? 'No' : 'Yes',
-      item.sourceReference, item.baselineConfirmed ? 'Yes' : 'No', item.complexityFacts])
+      item.sourceReference, item.baselineConfirmed ? 'Yes' : 'No', item.complexityFacts,
+      (item.dimensionIds ?? []).map(n => DIMENSIONS.find(d => d.no === n)?.name).join(', '), item.assessment?.reason ?? null])
   }
   for (const phase of summary.phases) for (const [roleId, md] of phase.derivedByRole) {
     evidence.addRow([phase.name, profileLabel(phase.deliveryProfile), 'Phase ratio fallback', null,
@@ -581,7 +597,17 @@ export async function buildWorkbook(summary: Summary) {
     row.alignment = { vertical: 'top', wrapText: true }
     if (rowNumber > 1) for (const column of [6, 9, 10, 11]) row.getCell(column).numFmt = '0.##'
   })
-  evidence.autoFilter = { from: 'A1', to: 'O1' }
+  evidence.autoFilter = { from: 'A1', to: 'Q1' }
+
+  const scopeSheet = wb.addWorksheet('Scope Dimensions', { views: [{ state: 'frozen', ySplit: 1 }] })
+  scopeSheet.columns = [{ header: 'No.', width: 8 }, { header: 'Dimension', width: 40 }, { header: 'สถานะขอบเขต', width: 24 }, { header: 'รายละเอียดและข้อสมมติ', width: 55 }, { header: 'รายการงานที่เกี่ยวข้อง', width: 55 }, { header: 'การนับจำนวน', width: 60 }, { header: 'ตรวจงานซ้ำ', width: 65 }]
+  for (const dimension of DIMENSIONS) {
+    const row = summary.scopeDimensions.find(s => s.dimension === dimension.no)
+    scopeSheet.addRow([dimension.no, dimension.name, SCOPE_STATES[row?.status ?? 'needs_info'], row?.detail ?? '', summary.phases.flatMap(p => p.items).filter(i => i.dimensionIds?.includes(dimension.no)).map(i => `#${i.id} ${i.detail}`).join('\n'), dimension.qty, dimension.overlap])
+  }
+  scopeSheet.getRow(1).font = { bold: true, color: { argb: BRAND } }
+  scopeSheet.eachRow(row => { row.alignment = { vertical: 'top', wrapText: true } })
+  scopeSheet.autoFilter = { from: 'A1', to: 'G1' }
 
   return wb
 }

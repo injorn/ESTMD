@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Local SQLite backups and generated QA artifacts are runtime data.
+    "data/**",
   ]),
   {
     // Maintenance scripts run under plain Node, outside the bundler.

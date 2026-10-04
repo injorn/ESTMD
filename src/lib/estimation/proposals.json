@@ -1,0 +1,684 @@
+[
+  {
+    "code": "1.4",
+    "title": "Workflow / Approval",
+    "kind": "existing",
+    "priority": 1,
+    "unit": "ต่อ workflow ตาม Matrix",
+    "gap": "เติมเกณฑ์เฉพาะสำหรับการอนุมัติหลายขั้นและหลายเส้นทาง",
+    "ask": "ลำดับขั้น, branch, role, sequential/parallel, reject/rework และการแก้ flow ระหว่างใช้งาน",
+    "levels": [
+      [
+        "ลำดับตรง ใช้ workflow template เดิม",
+        "ผู้อนุมัติและการเปลี่ยนสถานะคงที่ ไม่มีเงื่อนไขแยกทางใหม่"
+      ],
+      [
+        "เพิ่ม business rule หรือการเลือกผู้อนุมัติตามเงื่อนไข",
+        "มี reject/rework ที่จำกัด และใช้กลไกเดิมรองรับได้"
+      ],
+      [
+        "หลายขั้นพร้อมเงื่อนไขซ้อน หรือ sequential ร่วมกับ parallel",
+        "ผู้ดูแลปรับ flow ได้ หรือมีหลาย state/role เชื่อมกระบวนการข้ามระบบ"
+      ]
+    ],
+    "evidence": "eMOC ให้ Admin ปรับ Sequential/Parallel; Pyramid เพิ่มอนุมัติจาก L1–L2 เป็น L1–L5",
+    "source": [
+      "emoc",
+      "Breakdown_Rev2",
+      "E26"
+    ],
+    "rule": "หนึ่ง workflow = กระบวนการธุรกิจที่มีสถานะและจุดสิ้นสุดชัดเจน ไม่แยกนับทุกขั้นเป็นคนละ workflow",
+    "review": "ยืนยันขอบเขต workflow รวมกับ CRUD ก่อนคิด MD; ถ้าคิดแยก ให้ตัด logic ส่วนนั้นออกจากการประเมินหน้าจอ"
+  },
+  {
+    "code": "1.5+",
+    "title": "Notification / Email Template / Monitoring",
+    "kind": "existing",
+    "priority": 1,
+    "unit": "1.5 ต่อเหตุการณ์; 13.3 และ 14.2 ต่อโครงการ",
+    "gap": "เติมเกณฑ์การเตือนซ้ำ การตั้งผู้รับ และการติดตามผล",
+    "ask": "event, channel, template, ผู้รับ, schedule, repeat/stop condition, log และผลส่ง",
+    "levels": [
+      [
+        "ส่งเมื่อเกิด event เดียว ใช้ template และผู้รับจาก pattern เดิม",
+        "ไม่มี schedule หรือเงื่อนไขเลือกผู้รับใหม่"
+      ],
+      [
+        "เลือกผู้รับตาม role/state หรือให้แก้ template ได้",
+        "ตั้งเวลาและเตือนซ้ำด้วยเงื่อนไขตรงไปตรงมา พร้อมบันทึกผล"
+      ],
+      [
+        "หลาย event/channel และเงื่อนไขเวลา/ผู้รับซ้อนกัน",
+        "ต้องออกแบบ retry, escalation, ป้องกันส่งซ้ำ หรือหยุดเตือนตามสถานะข้ามระบบ"
+      ]
+    ],
+    "evidence": "Tank eMOC เตือนทุกวันจนอนุมัติ; eMOC GSP มีสรุปรายเดือนและเตือนตามอายุงาน",
+    "source": [
+      "tank",
+      "Scope of Work",
+      "B4, B9"
+    ],
+    "rule": "เหตุการณ์เดียวเปลี่ยนผู้รับตาม role ไม่เพิ่ม Qty อัตโนมัติ; งานสร้าง template editor/monitoring คิดแยกเมื่อมี deliverable ของตัวเอง",
+    "review": "แยก notification ออกจาก Job 4 ให้ชัด ไม่คิด scheduler เดียวซ้ำสอง Activity"
+  },
+  {
+    "code": "1.6+",
+    "title": "Export / Print / Document Generation",
+    "kind": "existing",
+    "priority": 1,
+    "unit": "1.6 ต่อรูปแบบไฟล์; 13.2 ต่อแบบฟอร์ม",
+    "gap": "ขยายจาก Excel/PDF ให้ครอบคลุม PowerPoint และเอกสารขนาดใหญ่",
+    "ask": "template, section, chart/image, pagination, ปริมาณข้อมูล, async generation และ reuse",
+    "levels": [
+      [
+        "ส่งออกตารางหรือ template เดิมด้วย library ที่ใช้แล้ว",
+        "mapping ตรง ไม่มี layout หรือกฎจัดหน้าเฉพาะ"
+      ],
+      [
+        "ปรับ template มีหลาย section ตาราง/กราฟหรือกฎจัดหน้าที่กำหนดได้",
+        "มี format หรือการคำนวณเพิ่ม แต่สร้างด้วย pattern เดิมได้"
+      ],
+      [
+        "layout/เงื่อนไขจัดหน้าซับซ้อน หรือประกอบข้อมูลหลายแหล่ง",
+        "ต้องสร้างเอกสารเบื้องหลัง ติดตามผล และจัดการขนาด/เวลาในการสร้าง"
+      ]
+    ],
+    "evidence": "CTM Export Staff Profile และตาราง/กราฟเป็น PowerPoint; Procurement สร้าง TOR ล่วงหน้า",
+    "source": [
+      "ctm",
+      "Calsheet",
+      "C66:C67"
+    ],
+    "rule": "หลายปุ่มที่ใช้ template เดียวกันไม่เพิ่ม Qty; การสร้างและพิมพ์เอกสารเดียวกันคิดขอบเขตร่วมกัน",
+    "review": "ไฟล์ PowerPoint/PDF ไม่เป็น High โดยชื่อไฟล์เพียงอย่างเดียว; ยืนยันจำนวน template/รูปแบบที่แตกต่างจริง"
+  },
+  {
+    "code": "12.1",
+    "title": "Authentication / SSO / MFA",
+    "kind": "existing",
+    "priority": 1,
+    "unit": "ต่อ interface ตาม Matrix",
+    "gap": "เติมเกณฑ์ identity provider, token flow และ device policy",
+    "ask": "provider, user population, authentication flow, token/secret, shared device และ integration เดิม",
+    "levels": [
+      [
+        "ต่อ provider ด้วย SDK/pattern มาตรฐานเดิม",
+        "flow และ policy เดิม ไม่มีการแยกกลุ่มผู้ใช้หรืออุปกรณ์ใหม่"
+      ],
+      [
+        "เพิ่มกลุ่มผู้ใช้หรือ provider และปรับ token/claim mapping",
+        "ใช้ MFA ตามกลไกมาตรฐาน หรือเชื่อม CA&A ด้วย flow ที่มีแบบชัดเจน"
+      ],
+      [
+        "หลาย provider/flow ร่วมเงื่อนไข role/device ที่ซับซ้อน",
+        "shared device whitelist, session/token lifecycle หรือ trust boundary ต้องออกแบบเพิ่ม"
+      ]
+    ],
+    "evidence": "IRIN ใช้ Azure AD/B2C และ whitelist อุปกรณ์ส่วนกลางร่วมกับ CA&A",
+    "source": [
+      "irin",
+      "Scope",
+      "B12"
+    ],
+    "rule": "นับ integration ที่แตกต่างจริง ไม่แยกทุก token request เป็นคนละ interface",
+    "review": "MFA มาตรฐานไม่เป็น High อัตโนมัติ; แยกงานสิทธิ์และย้าย user/role ออกจากงาน login"
+  },
+  {
+    "code": "12.2",
+    "title": "Role & Permission Management",
+    "kind": "existing",
+    "priority": 1,
+    "unit": "ต่อโครงการตาม Matrix; ระบุจำนวนหน้าจอที่กระทบ",
+    "gap": "เติม granularity ของสิทธิ์และผลกระทบหลายหน้าจอ",
+    "ask": "role, menu/button/data-level, multi-role, inheritance, affected screens และการย้ายสิทธิ์",
+    "levels": [
+      [
+        "ปรับ role/menu บน permission pattern เดิม",
+        "ขอบเขตจำกัด ไม่มีการเปลี่ยน authorization model"
+      ],
+      [
+        "เพิ่มสิทธิ์ระดับ action/button หรือรองรับหลาย role",
+        "ต้อง map สิทธิ์กับหลายหน้าจอ แต่ใช้ authorization model เดิมได้"
+      ],
+      [
+        "สิทธิ์ขึ้นกับข้อมูล/บริบท หรือมี hierarchy/ข้อขัดแย้งหลาย role",
+        "เปลี่ยน authorization model ข้ามโมดูล พร้อม migration และ regression ของสิทธิ์"
+      ]
+    ],
+    "evidence": "Pyramid ผูกสิทธิ์ Read Only/Add/Edit/Delete ระดับปุ่มกับ 49 หน้าจอ",
+    "source": [
+      "pyramid",
+      "Summary_Option 1",
+      "B5"
+    ],
+    "rule": "Qty ตาม Matrix ยังเป็น 1 ต่อโครงการ; เก็บจำนวนหน้าจอเป็นขอบเขตประกอบ MD ไม่คูณ 49 ซ้ำกับ Qty",
+    "review": "หากต้องการเปลี่ยนหน่วยเป็นต่อหน้าจอ ต้องยืนยันหน่วยและค่า MD ใหม่ก่อน"
+  },
+  {
+    "code": "12.3–4",
+    "title": "Audit / History / Session Policy",
+    "kind": "existing",
+    "priority": 1,
+    "unit": "แต่ละ Activity ต่อโครงการตาม Matrix",
+    "gap": "เติมเกณฑ์ประวัติการทำรายการและ session ที่มีหลายเงื่อนไข",
+    "ask": "เหตุการณ์ audit, ข้อมูลก่อน/หลัง, การค้นหา/retention, idle/absolute timeout และ extend session",
+    "levels": [
+      [
+        "บันทึก event หรือกำหนด timeout ด้วยกลไกเดิม",
+        "ไม่มีการค้นหา/นโยบายอายุข้อมูลหรือ session flow เพิ่ม"
+      ],
+      [
+        "เพิ่ม audit ก่อน/หลัง และค้นหาตามสิทธิ์",
+        "เพิ่มหน้า setting, แจ้งเตือนก่อนหมดเวลา หรือ extend session ตามกฎคงที่"
+      ],
+      [
+        "audit ข้ามระบบพร้อมการคุ้มครองความถูกต้องของ log",
+        "session policy หลายเงื่อนไข/อุปกรณ์ หรือเชื่อมการยกเลิก session/token ข้ามระบบ"
+      ]
+    ],
+    "evidence": "IRIN ต้องดู login log เพื่อ audit; Pyramid มี idle/continuous timeout, extend และหน้าตั้งค่า",
+    "source": [
+      "pyramid",
+      "Summary_Option 1",
+      "B6"
+    ],
+    "rule": "Audit 12.3 และ Session 12.4 เป็นคนละ Activity: ระบุและประเมินแต่ละงานแยก แม้นำเสนอร่วมกลุ่มนี้",
+    "review": "จำนวน event log ไม่ใช่ Qty ตาม Matrix; เพิ่มปัจจัย volume/retention เมื่อมีข้อกำหนดจริง"
+  },
+  {
+    "code": "5.1–3",
+    "title": "Interface / Master Data Sync",
+    "kind": "existing",
+    "priority": 2,
+    "unit": "ต่อ interface ตาม Matrix",
+    "gap": "ขยายจาก field และ one/two-way ไปสู่ความซับซ้อนของการส่งข้อมูล",
+    "ask": "endpoint/action, mapping, data flow, queue, retry, idempotency, transaction และ status consistency",
+    "levels": [
+      [
+        "mapping ตรง ใช้ integration pattern เดิม",
+        "flow เดียว ไม่มี transformation หรือการประสานสถานะเฉพาะ"
+      ],
+      [
+        "เพิ่ม validation/transformation หรือหลาย action ที่ขอบเขตชัด",
+        "มี retry/log มาตรฐาน และแก้สถานะผิดพลาดในระบบเดียวได้"
+      ],
+      [
+        "async/queue พร้อม resend/cancel และป้องกันข้อมูลซ้ำ",
+        "หลายระบบต้องรักษา transaction/state หรือ reconciliation หลังส่ง"
+      ]
+    ],
+    "evidence": "Smart Search แบ่งคิวส่ง Material ไป SAP พร้อมแจ้งผลและ Resend/Cancel",
+    "source": [
+      "smart",
+      "R3",
+      "B11:B13"
+    ],
+    "rule": "กำหนด interface ตามสัญญาข้อมูลและขอบเขตธุรกิจ; resend ของ interface เดิมไม่เพิ่ม Qty อีก 1",
+    "review": "5.2 เป็น External Master Data Sync แต่เกณฑ์เดิมเน้นตาราง SAP Master ต้องยืนยัน mapping ใหม่; ไม่นำช่วง field ใหม่เข้าระบบทันที"
+  },
+  {
+    "code": "4",
+    "title": "Job / Schedule / Background Processing",
+    "kind": "existing",
+    "priority": 2,
+    "unit": "ต่อ job ตาม Matrix",
+    "gap": "เพิ่ม dependency, reprocess, monitoring และข้อมูลปริมาณมาก",
+    "ask": "trigger, input volume, dependency, schedule, retry/reprocess, log และเวลาเสร็จที่ต้องการ",
+    "levels": [
+      [
+        "งานภายในใช้ scheduler/pattern เดิม ขั้นตอนเดียว",
+        "ไม่มี dependency หรือกฎกู้คืนเฉพาะ"
+      ],
+      [
+        "schedule/trigger หลายเงื่อนไข แต่ flow ชัดเจน",
+        "เชื่อมระบบหรือมี retry/log ด้วยกลไกมาตรฐาน"
+      ],
+      [
+        "หลาย dependency, batch/queue หรือขั้นตอนต่อเนื่องข้ามระบบ",
+        "ต้อง checkpoint/reprocess/reconcile และออกแบบรองรับปริมาณหรือเวลาที่จำกัด"
+      ]
+    ],
+    "evidence": "Procurement ต้องแยกการทำงาน Job Schedule ของแต่ละ Pod เพื่อให้เร็วขึ้น",
+    "source": [
+      "procurement",
+      "Performance Tuning",
+      "B3"
+    ],
+    "rule": "หนึ่ง job นับตามหน่วยประมวลผลที่ deploy/ควบคุมอิสระ ไม่ใช่จำนวนครั้งที่ schedule รัน",
+    "review": "งานเกินช่วง records เดิมยังต้องตรวจทาน; เกณฑ์ volume ใหม่ต้องมี workload และข้อจำกัดระบบรองรับ"
+  },
+  {
+    "code": "2–3",
+    "title": "Dashboard / Report / Data Preparation",
+    "kind": "existing",
+    "priority": 2,
+    "unit": "2 ต่อ dashboard; 3 ต่อรายงาน ตาม Matrix",
+    "gap": "เติม query, KPI, หลายมิติ และงาน prepare/view",
+    "ask": "chart/drill-down, data source, query/aggregation, KPI, freshness, prepare table/view และ export",
+    "levels": [
+      [
+        "อ่านข้อมูลจาก view/source ที่พร้อม ใช้สูตรและรูปแบบเดิม",
+        "ไม่มี transformation หรือ KPI/business rule ใหม่"
+      ],
+      [
+        "หลายมิติหรือ aggregation/KPI เพิ่มเติมที่กติกาชัดเจน",
+        "ต้องเตรียมข้อมูลหรือปรับ view ภายในแหล่งข้อมูลที่กำหนด"
+      ],
+      [
+        "join/transformation หลายแหล่ง หรือ KPI/สิทธิ์ข้อมูลซับซ้อน",
+        "มี pivot/prepare pipeline, freshness/performance requirement ที่ต้องออกแบบเพิ่ม"
+      ]
+    ],
+    "evidence": "Smart Search มี prepare table และ pivot; IRIN สร้าง 12 view และแก้ 1 view ให้ Power BI",
+    "source": [
+      "smart",
+      "R9",
+      "B3:B8"
+    ],
+    "rule": "หนึ่ง dashboard ไม่เท่ากับจำนวน chart; แยก preparation เมื่อมีงานและ deliverable ของตัวเอง มิฉะนั้นรวมในขอบเขตเดียว",
+    "review": "Dashboard และ Report ประเมินคนละ Activity; chart >4 หรือ drill-down >2 เกินเกณฑ์เดิม ให้ตรวจทานก่อนยืนยัน"
+  },
+  {
+    "code": "1.2",
+    "title": "Import Excel / Cross-sheet Validation",
+    "kind": "existing",
+    "priority": 2,
+    "unit": "ต่อหน้าจอตาม Matrix; รวม action ของรายการ",
+    "gap": "เติมตัวอย่างเฉพาะของ Import ให้ใช้ CRUD policy ได้สม่ำเสมอ",
+    "ask": "sheet/field mapping, validation ข้ามชีต, duplicate, error feedback, partial import และ rollback",
+    "levels": [
+      [
+        "ใช้ importer/pattern เดิมได้ทันที ทุก action ไม่มี business rule เพิ่ม",
+        "mapping ตรง และใช้ validation/error handling เดิม"
+      ],
+      [
+        "เพิ่ม mapping หรือ validation ตาม business rule ที่ขอบเขตชัด",
+        "แสดงข้อผิดพลาดรายแถวและตรวจ duplicate ตาม pattern เดิมได้"
+      ],
+      [
+        "validation หลายชีต/หลาย entity ที่มีเงื่อนไขซ้อน",
+        "partial import, rollback/reprocess หรือความสอดคล้องข้อมูลข้ามระบบต้องออกแบบใหม่"
+      ]
+    ],
+    "evidence": "Smart Search ระบุ Excel 9 ชีต ต้อง validate แต่ละชีตและ map field กับหน้าจอ",
+    "source": [
+      "smart",
+      "R3",
+      "B5"
+    ],
+    "rule": "Import เป็น action ใน CRUD รายการเดียว ไม่คิด Activity 1.2 เพิ่มซ้ำเพียงเพราะมีปุ่ม Import",
+    "review": "จำนวนชีตเป็นปัจจัยประกอบ ไม่ใช้ 9 ชีตเป็นเกณฑ์ High โดยอัตโนมัติ"
+  },
+  {
+    "code": "6",
+    "title": "Data Migration / Cleansing / Reconciliation",
+    "kind": "existing",
+    "priority": 1,
+    "unit": "ต่อตารางตาม Matrix; SAP/Migration profile ลง MD ตามบทบาท",
+    "gap": "เติมขั้นตอนและความเสี่ยงที่จำนวนตารางบอกไม่ได้",
+    "ask": "source/target, mapping, cleansing, dependency, mock run, validation, downtime, cutover และ rollback",
+    "levels": [
+      [
+        "source/target และ schema ใกล้เคียงกัน ใช้เครื่องมือเดิม",
+        "ไม่มี cleansing หรือการประสานระบบเพิ่มเติม มีวิธีตรวจผลชัดเจน"
+      ],
+      [
+        "ต้อง transform/cleanse และย้ายตามลำดับ dependency ที่กำหนด",
+        "มี mock run และ reconciliation ด้วยกฎที่ชัดเจน"
+      ],
+      [
+        "หลาย source/target, ความสัมพันธ์/คุณภาพข้อมูลซับซ้อน",
+        "cutover จำกัด downtime, dual run หรือ rollback/reconciliation ข้ามระบบ"
+      ]
+    ],
+    "evidence": "eMOC แยก Extraction, Transform, Loading และ Preload/Postload sign-off",
+    "source": [
+      "emoc",
+      "ICT_Manday",
+      "B27:B32"
+    ],
+    "rule": "อย่าคิด extraction/transform/load เป็นการย้ายตารางเดิมสามครั้ง; แยก migration management ถ้ามีขอบเขตเฉพาะ",
+    "review": "จำนวน record และ mock run ต้องเก็บประกอบ; อย่ากำหนดช่วง L/M/H ของ dual run จากชื่อไฟล์เพียงอย่างเดียว"
+  },
+  {
+    "code": "16.1+",
+    "title": "Framework / Database / Cloud Upgrade",
+    "kind": "existing",
+    "priority": 1,
+    "unit": "16.1/16.2 ต่อ stack; 16.3 ต่อ database; 16.4 ต่อโครงการ",
+    "gap": "เติม version gap, compatibility และ dependency ที่ต้อง retest",
+    "ask": "รุ่นเดิม/ใหม่, breaking change, library, schema, environments, ระบบที่เชื่อมและ rollback",
+    "levels": [
+      [
+        "อัปเกรดที่ compatibility ชัดและใช้ deployment pattern เดิม",
+        "ไม่มี code/schema change ที่มีนัยสำคัญ"
+      ],
+      [
+        "ต้องปรับ library/code/config หรือ connection ตามผล compatibility check",
+        "มี regression และ retest interface ที่ระบุขอบเขตได้"
+      ],
+      [
+        "เปลี่ยน runtime/architecture หรือ version gap มากพร้อม dependency ซับซ้อน",
+        "หลายระบบต้องปรับและ cutover ร่วมกัน หรือเปลี่ยน platform พร้อม fallback"
+      ]
+    ],
+    "evidence": "e-Provident อัปเกรด .NET 2.0 → 4.8.1 และ SQL Server รุ่นเก่า → 2022 พร้อม retest interface",
+    "source": [
+      "fund",
+      "enh202(Re)+security+CR V2",
+      "C36:C44"
+    ],
+    "rule": "ประเมินแต่ละ Activity และหน่วยเดิมแยกกัน ไม่รวมทุกงานอัปเกรดเป็น Qty ต่อโครงการเดียว",
+    "review": "การข้ามหลาย version เป็นข้อมูลให้ตรวจ ไม่เป็น High โดยลำพัง; ต้องดูผล compatibility และขอบเขตที่แก้จริง"
+  },
+  {
+    "code": "7",
+    "title": "Security Scan Remediation",
+    "kind": "existing",
+    "priority": 1,
+    "unit": "ต่อโครงการตาม Matrix",
+    "gap": "เพิ่ม root cause, วิธีแก้ และผลกระทบ regression",
+    "ask": "unique root cause, severity, affected components, dependency/license, remediation pattern และ re-scan",
+    "levels": [
+      [
+        "แก้ config/code ตามวิธีมาตรฐานที่พิสูจน์แล้ว",
+        "ขอบเขตจำกัด ไม่มีผลต่อ architecture/authentication"
+      ],
+      [
+        "แก้ code หรือ library หลายจุดตามแนวทางชัด",
+        "ต้อง regression ส่วนที่ได้รับผลกระทบและยืนยันผล re-scan"
+      ],
+      [
+        "แก้ root cause ที่เกี่ยวกับ architecture/auth/data protection",
+        "เปลี่ยน dependency หลักหรือ security flow ข้ามโมดูล พร้อมทดสอบผลกระทบกว้าง"
+      ]
+    ],
+    "evidence": "e-Provident มี findings หลายระดับจาก Acunetix, Coverity และ Black Duck",
+    "source": [
+      "fund",
+      "enh202(Re)+security+CR V2",
+      "C38"
+    ],
+    "rule": "findings ที่เกิดจาก root cause เดียวไม่ควรนับ MD เต็มซ้ำทุก finding; ไม่ใช่ Qty ต่อโครงการตามจำนวน finding",
+    "review": "severity ของช่องโหว่ไม่เท่ากับระดับความซับซ้อนแรงงาน; แยกงาน scan กับ remediation และตรวจ In Scope"
+  },
+  {
+    "code": "14.1",
+    "title": "Data Retention / Archive / Auto-delete",
+    "kind": "existing",
+    "priority": 2,
+    "unit": "ต่อโครงการตาม Matrix",
+    "gap": "เติมกฎอายุข้อมูล ความสัมพันธ์ และหลักฐานการลบ",
+    "ask": "retention rule, entity/reference, archive/delete, exception, schedule, audit และ recovery",
+    "levels": [
+      [
+        "กฎเวลาเดียวกับข้อมูลที่ไม่มี dependency ซับซ้อน",
+        "ใช้ scheduler/delete pattern เดิมและตรวจผลได้"
+      ],
+      [
+        "หลาย entity หรือมีข้อยกเว้นและต้อง archive ก่อนลบ",
+        "มี audit/preview และ validation ตามกฎธุรกิจที่ชัด"
+      ],
+      [
+        "dependency ข้ามระบบหรือเงื่อนไข retention ซ้อนกัน",
+        "ต้องจัดการ consistency, archive/recovery หรือป้องกันลบผิดตาม policy เฉพาะ"
+      ]
+    ],
+    "evidence": "E-Recruit มี auto-delete ผู้สมัครภายนอกที่ไม่ active เกิน 2 ปีนับจาก update ล่าสุด",
+    "source": [
+      "recruit",
+      "E-Recruit adjust before EA",
+      "C23"
+    ],
+    "rule": "การรันรายวันไม่เพิ่ม Qty; รวม scheduler เดิมในขอบเขต retention ถ้าไม่มี job deliverable แยก",
+    "review": "2 ปีเป็นเงื่อนไขของตัวอย่าง ไม่ใช่ threshold สำหรับจัด L/M/H และต้องยืนยันนโยบายกับเจ้าของข้อมูล"
+  },
+  {
+    "code": "11.x",
+    "title": "Test Scenario / SIT / UAT / Regression",
+    "kind": "existing",
+    "priority": 2,
+    "unit": "11.1, 11.3, 11.4 ต่อโมดูลตาม Matrix",
+    "gap": "ขยายจากจำนวน scenario/รอบ ไปสู่ role/state/interface และ regression",
+    "ask": "module, scenario, role/state matrix, interface, test data, environment, regression และ retest",
+    "levels": [
+      [
+        "ทดสอบ flow เดิมที่ขอบเขตจำกัดและ test data พร้อม",
+        "ไม่มี dependency ข้ามระบบหรือ role/state เพิ่ม"
+      ],
+      [
+        "หลาย scenario/role/state หรือ interface ตามกฎชัดเจน",
+        "ต้องเตรียมข้อมูลและ regression โมดูลที่ได้รับผลกระทบ"
+      ],
+      [
+        "end-to-end ข้ามหลายระบบและ role/state ที่มีเงื่อนไขซ้อน",
+        "test data/environment coordination หรือ regression/automation ต้องออกแบบเพิ่มเติม"
+      ]
+    ],
+    "evidence": "Smart Search ระบุราว 40 test case; SAP LO แยก Regression Test",
+    "source": [
+      "sap",
+      "SR21005626_Estimated Effort",
+      "B13, B37, B59"
+    ],
+    "rule": "ประเมินงานทำ script, SIT และ UAT แยก scope; จำนวนรอบไม่ใช่จำนวนโมดูลและไม่คูณ MD ซ้ำโดยไม่ตรวจ",
+    "review": "คงจำนวนรอบเดิมเป็นข้อมูลประกอบ; เกินขอบบนหรือมี scope ที่ร่างยังไม่ครอบคลุมให้ตรวจทาน"
+  },
+  {
+    "code": "17.x",
+    "title": "CI/CD / Environment / Deploy / Go-live Support",
+    "kind": "existing",
+    "priority": 1,
+    "unit": "17.1 ต่อ pipeline; 17.3 ต่อ interface; 17.4 ต่อ environment; 17.2/17.5 ต่อโครงการ",
+    "gap": "เติม release dependency, quality gate, rollback และขอบเขต support",
+    "ask": "service/pipeline, environment, scan gate, network, cutover window, rollback และ coverage ของ support",
+    "levels": [
+      [
+        "ตั้งค่า/deploy ด้วย pipeline หรือ runbook เดิม",
+        "environment และ dependency ชัด มีขั้นตอนยืนยันผลมาตรฐาน"
+      ],
+      [
+        "เพิ่ม environment/service หรือ quality gate และ config เฉพาะ",
+        "ประสาน firewall/transport และมี rollout/rollback ตามแผนที่กำหนด"
+      ],
+      [
+        "หลาย service/environment ต้อง release ร่วมกัน",
+        "เปลี่ยน deployment strategy หรือจัดการ downtime, recovery และ escalation ข้ามทีม"
+      ]
+    ],
+    "evidence": "RCP มี DevOps pipeline front/back; Orchestra มี Transport และ Firewall; eMOC มี support หลัง go-live",
+    "source": [
+      "rcp",
+      "PTTDigital_Manday",
+      "B32"
+    ],
+    "rule": "หนึ่งกลุ่มนี้ต้องแตกตาม Activity/หน่วยของแต่ละงาน; shared pipeline ไม่คิดเต็มซ้ำทุกหน้าจอ",
+    "review": "support 1 เดือนหรือ warranty 12 เดือนไม่ใช่ MD เท่าจำนวนวันทั้งหมด ต้องระบุ effort/coverage ที่ตกลง"
+  },
+  {
+    "code": "10.x",
+    "title": "Requirement / Design / Existing-system Change",
+    "kind": "existing",
+    "priority": 2,
+    "unit": "10.1/10.2 ต่อโมดูล; 10.3 ต่อหน้าจอ; 10.4 ต่อโครงการ",
+    "gap": "เพิ่ม impact และ shared model สำหรับงานแก้ระบบเดิม",
+    "ask": "new/enhancement, module/component, process, stakeholder, shared data model และ reuse",
+    "levels": [
+      [
+        "แก้จุดจำกัดตาม requirement ที่ชัดและใช้ design เดิม",
+        "ไม่มีการเปลี่ยน process/shared model หรือ dependency เพิ่ม"
+      ],
+      [
+        "เปลี่ยน process หรือ data model ในขอบเขตโมดูลที่กำหนด",
+        "ต้องตกลงหลาย stakeholder และปรับหน้าจอ/รายงานที่เกี่ยวข้อง"
+      ],
+      [
+        "เปลี่ยน shared model/process ข้ามโมดูลหรือหลายระบบ",
+        "มีทางเลือก/ผลกระทบที่ต้องวิเคราะห์และ trace requirement ถึง design/test"
+      ]
+    ],
+    "evidence": "iCMS เปลี่ยนการแสดงผลกระทบ 16 เมนูพนักงาน, 2 เมนู Admin, 13 Report และ 1 Dashboard",
+    "source": [
+      "icms",
+      "DGT_Manday",
+      "B18"
+    ],
+    "rule": "จำนวน impacted components เป็น scope ประกอบ ไม่เอา 32 components ไปคูณกับโมดูลและหน้าจอซ้ำ",
+    "review": "ต้องแยกหน่วยของแต่ละ Activity และทบทวนเกณฑ์เดิมที่ใช้ issue/form ก่อนนำร่างมาแทน"
+  },
+  {
+    "code": "ใหม่",
+    "title": "Performance Tuning",
+    "kind": "new",
+    "priority": 3,
+    "unit": "เสนอ: ต่อขอบเขตคอขวดที่มีผลวัดและ acceptance เดียว",
+    "gap": "เพิ่มงานปรับประสิทธิภาพที่มี deliverable ต่างจาก CRUD",
+    "ask": "bottleneck, workload, baseline/target, affected layers, dependency และผลวัดก่อน/หลัง",
+    "levels": [
+      [
+        "คอขวดอยู่ในจุดเดียว มีวิธีแก้ที่พิสูจน์แล้ว",
+        "ปรับ query/index/config โดยไม่เปลี่ยน data flow"
+      ],
+      [
+        "หลายจุดในขอบเขตเดียวต้องปรับร่วมกัน",
+        "ปรับ query/view/stored/code หรือ caching พร้อม regression และ benchmark"
+      ],
+      [
+        "คอขวดหลายชั้นหรือหลายระบบ",
+        "ต้องออกแบบ data flow/processing/storage ใหม่เพื่อให้ผ่าน target ที่จำกัด"
+      ]
+    ],
+    "evidence": "Procurement ปรับ query, view, stored procedure, job ต่อ Pod และที่เก็บไฟล์",
+    "source": [
+      "procurement",
+      "Performance Tuning",
+      "B3:B4, B12:B15, B22:B35"
+    ],
+    "rule": "หนึ่ง incident ไม่เท่ากับหนึ่งหน่วยเสมอ; รวมการแก้ที่พิสูจน์เป้าหมายเดียวกัน ไม่คิดทุก function ซ้ำเต็ม",
+    "review": "หน่วยนับและค่า MD ใหม่ต้องยืนยัน; การทดสอบ performance ที่รวมใน acceptance ไม่คิดแยกซ้ำ"
+  },
+  {
+    "code": "ใหม่",
+    "title": "Performance / Load Test",
+    "kind": "new",
+    "priority": 3,
+    "unit": "เสนอ: ต่อชุด workload/scenario ที่มีแผนและรายงานผล",
+    "gap": "เพิ่มประเภททดสอบประสิทธิภาพแยกจาก SIT/UAT และงาน tuning",
+    "ask": "scenario, concurrency/throughput, test data, environment, ramp/soak, monitoring และรอบทดสอบ",
+    "levels": [
+      [
+        "ใช้ script/workload มาตรฐานกับระบบที่พร้อม",
+        "scenario ตรงและมีวิธีวัดผลเดิม"
+      ],
+      [
+        "สร้าง script/data เพิ่มเพื่อหลาย flow หรือ workload",
+        "ต้อง monitor หลาย service และทดสอบตามแผนที่ขอบเขตชัด"
+      ],
+      [
+        "distributed/end-to-end load หรือ workload/state ซับซ้อน",
+        "เตรียม environment/data และวิเคราะห์หลาย dependency เพื่อพิสูจน์ SLA"
+      ]
+    ],
+    "evidence": "CTM ระบุ Performance Test; eMOC GSP ระบุ Performance Test ด้วย JMeter",
+    "source": [
+      "ctm",
+      "Calsheet",
+      "C103, C158"
+    ],
+    "rule": "หนึ่ง test campaign รวม setup/script/run/report ตาม scope; รอบ retest เป็น effort เพิ่ม ไม่เพิ่ม Qty อัตโนมัติ",
+    "review": "การแก้ bottleneck อยู่ใน Tuning; ไม่มีตัวเลข concurrency มาตรฐานจากหลักฐานชุดนี้ ต้องยืนยันเพิ่มเติม"
+  },
+  {
+    "code": "ใหม่",
+    "title": "Training / Knowledge Transfer",
+    "kind": "new",
+    "priority": 3,
+    "unit": "เสนอ: ต่อ session โดยระบุชั่วโมงและกลุ่มผู้เรียน",
+    "gap": "แยกการจัดสอนออกจาก 15.1 ที่เป็นงานทำคู่มือ",
+    "ask": "TTT/EUT/technical, audience, duration, delivery mode, exercise, environment และ material reuse",
+    "levels": [
+      [
+        "สอนเนื้อหาเดิมที่มีเอกสารและ demo พร้อม",
+        "กลุ่มผู้เรียนและรูปแบบการสอนเดียว"
+      ],
+      [
+        "ต้องปรับเนื้อหา/ตัวอย่างตาม role หรือเพิ่ม workshop",
+        "ต้องเตรียมข้อมูล/ระบบฝึกและประสานผู้เรียนตามแผน"
+      ],
+      [
+        "technical handover หรือหลายกลุ่ม/บริบทที่ต้องออกแบบการฝึก",
+        "มีแบบฝึก/การประเมินและ environment เฉพาะพร้อมข้อกำหนดการส่งมอบ"
+      ]
+    ],
+    "evidence": "Digital Job Card แยก Training Material, TTT, EUT และ Technical Training",
+    "source": [
+      "jobcard",
+      "PTTDigital_Manday",
+      "B45:B47, B50"
+    ],
+    "rule": "session ซ้ำใช้ material เดิมไม่คิดค่าทำคู่มือใหม่ทุกครั้ง; ชั่วโมงสอนและการเตรียมต้องแสดงแยก",
+    "review": "จำนวน session เพิ่ม effort ผ่าน Qty ไม่เพิ่มระดับเอง; ยืนยันหน่วยและ duration basis ก่อนกำหนด MD"
+  },
+  {
+    "code": "SAP",
+    "title": "SAP Configuration / ABAP-RICEF",
+    "kind": "profile",
+    "priority": 3,
+    "unit": "ข้อมูลประกอบ SAP profile; ลง MD ตามบทบาท",
+    "gap": "เสนอ rubric เฉพาะ SAP ก่อนสร้าง Activity/Matrix MD ใหม่",
+    "ask": "module/process, config/custom code, object, pricing/infotype, transport, interface และ regression",
+    "levels": [
+      [
+        "ปรับ configuration เดิมใน process ที่จำกัด",
+        "ไม่มี custom development หรือ cross-module dependency ใหม่"
+      ],
+      [
+        "ปรับ config หลาย object หรือแก้ ABAP/RICEF ตาม pattern เดิม",
+        "มี integration/regression ที่ระบุขอบเขตชัด"
+      ],
+      [
+        "เปลี่ยน process/pricing/infotype หรือ custom logic ที่เกี่ยวพันหลายโมดูล",
+        "มี transport/cutover/dependency และ end-to-end regression ซับซ้อน"
+      ]
+    ],
+    "evidence": "SAP LO ปรับ Pricing Procedure และมี FS/Development/RICEF testing; e-Provident เพิ่ม Infotype",
+    "source": [
+      "sap",
+      "SR21005626_Estimated Effort",
+      "B7:B8, B31:B32, B53:B54"
+    ],
+    "rule": "แยก config, custom code, interface และ test ตาม deliverable; ไม่จับ SAP configuration เป็น CRUD เว็บอัตโนมัติ",
+    "review": "L/M/H เป็นระดับเพื่ออธิบาย scope ในข้อเสนอ ไม่เปิดใช้ generic Matrix คำนวณ MD ของ SAP"
+  },
+  {
+    "code": "Rollout",
+    "title": "Country Rollout / Localization / Cutover",
+    "kind": "profile",
+    "priority": 3,
+    "unit": "ข้อมูลประกอบ Migration/Rollout profile; ลง MD ตามบทบาท",
+    "gap": "เติมบริบทของ rollout โดยใช้ profile ที่มีอยู่",
+    "ask": "country, timezone, currency/tax, master data, permission, vendor responsibility และ cutover",
+    "levels": [
+      [
+        "นำ pattern/config เดิมไปใช้ในบริบทที่เทียบเคียงกัน",
+        "หน้าที่ทีมและข้อมูลพร้อม ไม่มี logic ใหม่"
+      ],
+      [
+        "ปรับค่า/กฎตามประเทศและทำ data validation",
+        "ทดสอบ timezone, currency/master/permission และประสาน vendor ตามแผน"
+      ],
+      [
+        "หลายบริบทหรือ logic เฉพาะประเทศที่กระทบหลายระบบ",
+        "cutover/data reconciliation และ dependency ต้องประสานหลายฝ่าย"
+      ]
+    ],
+    "evidence": "ClickNGo ตรวจ local timezone UTC+6:30, สกุลเงิน, ภาษี, master และสิทธิ์แยกประเทศ",
+    "source": [
+      "click",
+      "ClickNGo Calsheet",
+      "B10:B16, B24"
+    ],
+    "rule": "แยกแรงงานช่วยตรวจ/ประสานของทีมจากแรงงานพัฒนาของ Vendor; ไม่คัดลอก MD ของ vendor มาเป็น MD ทีม",
+    "review": "ชื่อ Dual Run ในไฟล์ CTRM ยังไม่พอใช้ตั้งเกณฑ์; ขอบเขตและฝ่ายรับผิดชอบต้องยืนยันก่อนประเมิน"
+  }
+]

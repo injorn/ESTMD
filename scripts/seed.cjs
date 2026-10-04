@@ -339,5 +339,6 @@ function seedUsers() {
 console.log(`seeding master data into ${file}`)
 const { roles, cells, activities: activityCount } = seedAll()
 seedUsers()
+require('./seed-work-scope.cjs').register(db)
 db.close()
 console.log(`done: ${roles} roles, ${activityCount} activities, ${cells} matrix cells`)

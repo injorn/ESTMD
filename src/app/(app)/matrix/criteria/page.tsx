@@ -1,166 +1,73 @@
-import { Fragment } from 'react'
-
 import { requireUser } from '@/lib/dal'
-import {
-  LEVEL_DECISION_RULE,
-  LEVEL_DEF,
-  WORK_TYPE_LEVELS,
-} from '@/lib/work-level-criteria'
+import { listActivities, listRoles } from '@/lib/queries'
+import { db } from '@/lib/db'
+import { matrixCells } from '@/lib/db/schema'
+import { reviewedCriterion, criterionText } from '@/lib/estimation/catalog'
 import { STANDARD } from '@/lib/standard'
 import { criteriaSnapshot } from '@/lib/estimation-ai/policy'
-
 import { MatrixTabs } from '../matrix-tabs'
 
 export const metadata = { title: 'เกณฑ์ระดับงาน | Standard Matrix' }
-
-const LEVEL_STYLES = [
-  { label: 'Low', className: 'text-emerald-700' },
-  { label: 'Medium', className: 'text-amber-700' },
-  { label: 'High', className: 'text-rose-700' },
+const LEVELS = [
+  { label: 'Low', key: 'low', color: 'text-emerald-700' },
+  { label: 'Medium', key: 'medium', color: 'text-amber-700' },
+  { label: 'High', key: 'high', color: 'text-rose-700' },
 ] as const
 
 export default async function WorkLevelCriteriaPage() {
   const user = await requireUser()
-
+  const [activities, roles, cells] = await Promise.all([listActivities(), listRoles(), db.select().from(matrixCells)])
   return (
     <div className="space-y-4">
       <div>
         <h1 className="text-xl font-semibold">เกณฑ์ระดับงาน</h1>
-        <p className="mt-1 text-sm text-muted">
-          แนวทางเทียบระดับความซับซ้อนของงาน ใช้ประกอบการประเมิน Low, Medium และ
-          High
-        </p>
+        <p className="mt-1 text-sm text-muted">เกณฑ์ตามกิจกรรมใน Matrix ปัจจุบัน ใช้ข้อมูลชุดเดียวกับการประเมิน AI</p>
       </div>
-
       <MatrixTabs active="criteria" isAdmin={user.role === 'admin'} />
-
       <section className="card space-y-3 p-4">
-        <h2 className="text-sm font-semibold">เกณฑ์ CRUD สำหรับ Matrix ปัจจุบัน</h2>
-        <p className="text-sm text-muted">ใช้กับ 1.1 List/Search/Add/Edit/Delete, 1.2 ที่รวม Import Excel และ 1.3 Add/Edit/Delete พิจารณาทุก action แล้วเลือกระดับสูงสุดหนึ่งระดับต่อรายการ</p>
+        <h2 className="text-sm font-semibold">หลักการเลือกระดับ</h2>
+        <p className="text-sm">พิจารณาปัจจัยที่เกี่ยวข้องทั้งหมด แล้วเลือกระดับสูงสุด ไม่จำเป็นต้องครบทุกข้อในระดับนั้น ช่วงตัวเลขรวมค่าต้นและค่าสิ้นสุด หากข้อมูลไม่ครบหรืออยู่นอกช่วงเกณฑ์ ให้ตรวจทานก่อนยืนยันระดับ</p>
+        <p className="text-sm text-muted">เลือก Low ได้เมื่อปัจจัยทั้งหมดอยู่ระดับ Low และไม่มีเงื่อนไขของ Medium หรือ High หน่วยนับเป็นจำนวนงานที่ใช้คำนวณ MD ส่วนจำนวน Chart, ฟิลด์ หรือรอบทดสอบใช้ตัดสินความซับซ้อนต่อหน่วยงาน</p>
         <div className="grid gap-3 md:grid-cols-3">
-          {STANDARD.complexityLegend.map(level => <div key={level.label} className="rounded-md border border-line p-3">
-            <h3 className="text-sm font-semibold">{level.label}</h3><p className="mt-1 text-sm leading-relaxed">{level.description}</p>
-          </div>)}
-        </div>
-        <p className="text-sm text-muted">Import Excel ที่ใช้ pattern เดิมไม่เพิ่มระดับโดยตัวมันเอง ให้พิจารณา validation, business rule, state/role และระบบที่เชื่อมต่อ ข้อมูลไม่พอให้ถามเพิ่มก่อนเลือกระดับ</p>
-        <p className="text-xs text-muted">เวอร์ชันเกณฑ์: {criteriaSnapshot('1.1').version}</p>
-      </section>
-
-      <section className="space-y-3">
-        <h2 className="text-sm font-semibold">ภาพรวมระดับความซับซ้อน</h2>
-        <div className="grid gap-3 md:grid-cols-3">
-          {STANDARD.complexityLegend.map((level, index) => {
-            const style = LEVEL_STYLES[index]
-            return (
-              <article key={level.label} className="card space-y-2 p-4">
-                <h3 className={`text-sm font-semibold ${style.className}`}>
-                  {level.label}
-                </h3>
-                <p className="text-sm leading-relaxed text-muted">
-                  {level.description}
-                </p>
-              </article>
-            )
-          })}
-        </div>
-      </section>
-
-      <section className="space-y-3">
-        <div>
-          <h2 className="text-sm font-semibold">เกณฑ์แยกตามลักษณะงาน (เอกสารเดิม)</h2>
-          <p className="mt-0.5 text-xs text-muted">
-            รหัส CRUD ในเอกสารเดิมแยก action ต่างจาก Matrix ปัจจุบัน ให้ใช้เกณฑ์ CRUD ด้านบนสำหรับ 1.1–1.3
-          </p>
-        </div>
-
-        <div className="space-y-3">
-          {LEVEL_DEF.map((item, index) => (
-            <Fragment key={`${item.topic}-${index}`}>
-              {item.num !== null ? (
-                <h3 className="pt-2 text-sm font-semibold text-foreground">
-                  {item.num}. {item.topic}
-                </h3>
-              ) : null}
-
-              {item.low || item.medium || item.high ? (
-                <article className="card space-y-3 p-3 sm:p-4">
-                  {item.num === null ? (
-                    <h4 className="text-sm font-semibold">{item.topic}</h4>
-                  ) : null}
-                  <div className="grid gap-2 md:grid-cols-3">
-                    {[item.low, item.medium, item.high].map((description, i) => (
-                      <div
-                        key={LEVEL_STYLES[i].label}
-                        className="rounded-md border border-line bg-background p-3"
-                      >
-                        <p
-                          className={`mb-1 text-xs font-semibold ${LEVEL_STYLES[i].className}`}
-                        >
-                          {LEVEL_STYLES[i].label}
-                        </p>
-                        <p className="whitespace-pre-line text-sm leading-relaxed text-muted">
-                          {description || '—'}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                </article>
-              ) : null}
-            </Fragment>
+          {STANDARD.complexityLegend.map((level, index) => (
+            <div key={level.label} className="rounded-md border border-line p-3">
+              <h3 className={`text-sm font-semibold ${LEVELS[index].color}`}>{level.label}</h3>
+              <p className="mt-1 text-sm text-muted">{level.description}</p>
+            </div>
           ))}
         </div>
       </section>
-
       <section className="space-y-3">
-        <div>
-          <h2 className="text-sm font-semibold">
-            เกณฑ์เฉพาะตาม Work Type และหน่วยนับ
-          </h2>
-        </div>
-        <div className="card overflow-x-auto">
-          <table className="w-full min-w-[1000px] border-collapse text-sm">
-            <thead>
-              <tr className="bg-brand-soft/60 text-xs">
-                <th className="w-48 border-b border-line px-3 py-2 text-left font-semibold">
-                  Work Type
-                </th>
-                <th className="w-36 border-b border-line px-3 py-2 text-left font-semibold">
-                  Unit
-                </th>
-                {LEVEL_STYLES.map((level) => (
-                  <th
-                    key={level.label}
-                    className="min-w-64 border-b border-line px-3 py-2 text-left font-semibold"
-                  >
-                    {level.label}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {WORK_TYPE_LEVELS.map((item) => (
-                <tr key={item.type} className="border-b border-line/70 last:border-0">
-                  <td className="px-3 py-3 align-top font-medium">{item.type}</td>
-                  <td className="px-3 py-3 align-top text-muted">{item.unit}</td>
-                  {[item.low, item.medium, item.high].map((description, index) => (
-                    <td
-                      key={LEVEL_STYLES[index].label}
-                      className="px-3 py-3 align-top leading-relaxed text-muted"
-                    >
-                      {description}
-                    </td>
+        <h2 className="text-sm font-semibold">เกณฑ์แยกตามกิจกรรมและหน่วยนับ</h2>
+        {activities.map(activity => {
+          const snapshot = criteriaSnapshot(activity.code)
+          const source = snapshot.source
+          const reviewed = reviewedCriterion(activity.code)
+          return (
+            <article key={activity.id} className="card space-y-3 p-4">
+              <h3 className="text-sm font-semibold">{activity.code} {activity.name}</h3>
+              <p className="text-xs text-muted">หน่วยนับ: {activity.countUnit}</p>
+              {snapshot.integrationReady && source ? <>
+                <div className="grid gap-3 md:grid-cols-3">
+                  {LEVELS.map(level => (
+                    <div key={level.key} className="rounded-md border border-line p-3">
+                      <h4 className={`text-sm font-semibold ${level.color}`}>{level.label}</h4>
+                      <p className="mt-1 whitespace-pre-line text-sm leading-relaxed text-muted">{[...new Set([source[level.key], criterionText(activity.code, ({ low: 'L', medium: 'M', high: 'H' } as const)[level.key])].filter(Boolean))].join('\n\n')}</p>
+                    </div>
                   ))}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+                </div>
+                {snapshot.sourceCode === 'matrix-v3-crud' && <p className="text-sm text-muted">พิจารณาทุก action รวม Import Excel แล้วเลือกระดับสูงสุดต่อรายการ Import ที่ใช้ pattern เดิมไม่เพิ่มระดับด้วยตัวมันเอง หากไม่ใช้ pattern เดิมและไม่มีหลักฐานระดับ Medium/High ให้ตรวจทานเพิ่ม</p>}
+                {snapshot.newProject && <p className="text-sm text-muted">เกณฑ์ด้านบนใช้สำหรับการแก้ไขงานเดิม โครงการใหม่ใช้จำนวน Form: Medium 1–10 Form, High มากกว่า 10 Form ต้องระบุว่าเป็นโครงการใหม่หรือการแก้ไขก่อนประเมิน</p>}
+                {['5.1', '5.3'].includes(activity.code) && <p className="text-sm text-muted">One-way มากกว่า 10 ฟิลด์ยังไม่ครอบคลุมในเกณฑ์ ต้องตรวจทานก่อนยืนยัน</p>}
+                {activity.code === '4' && <p className="text-sm text-muted">งานภายในที่ซับซ้อนหรือมีข้อมูลมากกว่า 100,000 รายการยังไม่ครอบคลุมในเกณฑ์ ต้องตรวจทานก่อนยืนยัน</p>}
+                {snapshot.factors.some(factor => factor.limits?.[2] !== undefined) && <p className="text-sm text-muted">จำนวนที่เกินขอบบนของ High ต้องตรวจทานเพิ่มเติม ไม่จัดเป็น High อัตโนมัติ</p>}
+              </> : <p className="text-sm text-muted">ยังไม่มีเกณฑ์เฉพาะที่ตรงกับกิจกรรมนี้ ให้ผู้ประเมินอ้างอิงมาตรฐานของทีมและระบุเหตุผลประกอบระดับที่เลือก</p>}
+              {reviewed ? <div className="space-y-2 text-sm"><p><strong>ข้อมูลที่ต้องเก็บ:</strong> {reviewed.ask}</p><p><strong>การนับจำนวน:</strong> {reviewed.rule}</p><p><strong>ตรวจงานซ้ำ:</strong> {reviewed.review}</p>{reviewed.assumptions ? <p><strong>MD เริ่มต้นที่เสนอ:</strong> {reviewed.assumptions}<br />{reviewed.basis}</p> : null}</div> : null}
+              <div className="overflow-x-auto"><table className="w-full text-sm"><caption className="mb-2 text-left text-xs text-muted">MD ต่อหน่วยจาก Matrix ปัจจุบัน ก่อนตัวคูณ Qty และ ratio ระดับ Phase</caption><thead><tr className="bg-brand-soft"><th className="p-2 text-left">บทบาท</th>{['L', 'M', 'H'].map(l => <th key={l} className="p-2 text-right">{l}</th>)}</tr></thead><tbody>{roles.filter(r => cells.some(c => c.activityId === activity.id && c.roleId === r.id && c.manday > 0)).map(role => <tr key={role.id} className="border-b border-line"><th className="p-2 text-left font-normal">{role.name}</th>{['L', 'M', 'H'].map(l => <td key={l} className="p-2 text-right tabular-nums">{cells.find(c => c.activityId === activity.id && c.roleId === role.id && c.complexity === l)?.manday ?? 0}</td>)}</tr>)}</tbody><tfoot><tr><th className="p-2 text-left">รวม MD ต่อหน่วย</th>{['L', 'M', 'H'].map(l => <td key={l} className="p-2 text-right font-semibold">{Math.round(cells.filter(c => c.activityId === activity.id && c.complexity === l).reduce((sum, c) => sum + c.manday, 0) * 100) / 100}</td>)}</tr></tfoot></table></div>
+            </article>
+          )
+        })}
       </section>
-
-      <p className="rounded-md bg-brand-soft/50 px-3 py-2 text-sm leading-relaxed">
-        <span className="font-semibold">หลักการตัดสิน:</span>{' '}
-        {LEVEL_DECISION_RULE}
-      </p>
     </div>
   )
 }

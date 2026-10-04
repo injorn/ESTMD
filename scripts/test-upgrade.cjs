@@ -201,7 +201,7 @@ check(
 check(
   'activity count after upgrade',
   db.prepare('SELECT count(*) c FROM activities').get().c,
-  50,
+  53,
 )
 
 /* --------------------------------------------------- round-2 (v3) additions */
@@ -289,8 +289,8 @@ check(
     )
     .all(),
   [
-    { name: 'งานพัฒนาระบบใหม่ (Greenfield)', topics: 44 },
-    { name: 'ทุกหัวข้อ (ค่าเริ่มต้น)', topics: 50 },
+    { name: 'งานพัฒนาระบบใหม่ (Greenfield)', topics: 47 },
+    { name: 'ทุกหัวข้อ (ค่าเริ่มต้น)', topics: 53 },
   ],
 )
 check(

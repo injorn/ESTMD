@@ -1,6 +1,7 @@
 import { sql } from 'drizzle-orm'
 import type { EvaluationSnapshot } from '../estimation-ai/evaluation'
 import { DELIVERY_PROFILES } from '../delivery-profiles'
+import type { Assessment } from '../estimation/catalog'
 import {
   index,
   integer,
@@ -209,6 +210,15 @@ export const projectPhases = sqliteTable(
 )
 
 /** One keyed line item: an activity at a complexity, inside a phase. */
+export const projectScopeDimensions = sqliteTable('project_scope_dimensions', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  projectId: integer('project_id').notNull().references(() => projects.id, { onDelete: 'cascade' }),
+  dimension: integer('dimension').notNull(),
+  status: text('status', { enum: ['needs_info', 'in_scope', 'out_of_scope'] }).notNull().default('needs_info'),
+  detail: text('detail').notNull().default(''),
+}, t => [uniqueIndex('project_scope_dimensions_uq').on(t.projectId, t.dimension)])
+
+/** One keyed line item: an activity at a complexity, inside a phase. */
 export const projectItems = sqliteTable(
   'project_items',
   {
@@ -233,6 +243,8 @@ export const projectItems = sqliteTable(
     sourceReference: text('source_reference'),
     baselineConfirmed: integer('baseline_confirmed', { mode: 'boolean' }).notNull().default(false),
     complexityFacts: text('complexity_facts'),
+    dimensionIds: text('dimension_ids', { mode: 'json' }).$type<number[]>().notNull().default(sql`'[]'`),
+    assessment: text('assessment', { mode: 'json' }).$type<Assessment>(),
     countUnit: text('count_unit'),
     sortOrder: integer('sort_order').notNull().default(0),
   },

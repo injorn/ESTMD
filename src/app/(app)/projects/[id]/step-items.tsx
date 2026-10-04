@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { Fragment } from 'react'
 
 import {
   addPhase,
@@ -16,6 +17,9 @@ import { AddItemForm } from './add-item-form'
 import { EvidenceForm, ProfileForm } from './effort-forms'
 import { PROFILE_OPTIONS, isMatrixProfile, profileLabel } from '@/lib/delivery-profiles'
 import { buildSummary } from '@/lib/summary'
+import { ItemAssessment } from './item-assessment'
+import { criteriaSnapshot } from '@/lib/estimation-ai/policy'
+import { criterionText, PROFILE_GUIDANCE } from '@/lib/estimation/catalog'
 
 export function StepItems({
   detail,
@@ -148,6 +152,7 @@ export function StepItems({
 
             {readOnly ? <p className="px-4 py-2 text-sm text-muted">{profileLabel(phase.deliveryProfile)}</p> : <ProfileForm projectId={project.id} phaseId={phase.id} profile={phase.deliveryProfile} />}
             {!isMatrixProfile(phase.deliveryProfile) ? <p className="px-4 py-2 text-xs text-muted">ลง MD รวมตามบทบาทในรายการ; ค่าเริ่มต้น 0 รอประเมิน · ไม่ใช้สัดส่วนจาก DEV ภายใน</p> : null}
+            {PROFILE_GUIDANCE.filter(p => phase.deliveryProfile === 'sap' ? p.code === 'SAP' : phase.deliveryProfile === 'migration' && p.code === 'Rollout').map(p => <details key={p.code} className="mx-4 my-3 rounded border border-line p-3 text-sm"><summary className="cursor-pointer font-medium">แนวทางประเมิน {p.title}</summary><div className="mt-3 space-y-2"><p><strong>ข้อมูลที่ต้องเก็บ:</strong> {p.ask}</p><p>{p.rule}</p><p>{p.review}</p><div className="grid gap-3 md:grid-cols-3">{p.levels.map((lines, i) => <div key={i} className="border border-line p-3"><h3 className="font-medium">ขอบเขต{['ง่าย', 'ปานกลาง', 'ซับซ้อน'][i]}</h3><p>{lines.join('; ')}</p></div>)}</div><p className="text-xs text-muted">ใช้ช่วยแตกขอบเขตและลง MD ตามบทบาท ไม่คำนวณจาก L/M/H ของ Matrix</p></div></details>)}
 
             <div className="overflow-x-auto">
               <table className="w-full min-w-[900px] border-collapse text-sm">
@@ -185,13 +190,13 @@ export function StepItems({
                       ? activityById.get(item.activityId)
                       : null
                     return (
-                      <tr
-                        key={item.id}
+                      <Fragment key={item.id}><tr
                         className="border-b border-line/70 last:border-0 align-top"
                       >
                         <td className="px-3 py-2">
                           <p className="whitespace-pre-line">{item.detail}</p>
                           {pendingIds.has(item.id) ? <p className="mt-1 text-xs font-medium text-accent">รอประเมิน: จับคู่ Matrix หรือกรอก MD ตามบทบาท</p> : null}
+
                           {readOnly ? <p className="mt-1 break-all text-xs text-muted">{item.sourceReference ?? 'ยังไม่ระบุแหล่งอ้างอิง'}{item.baselineConfirmed ? ' · ยืนยัน Baseline แล้ว' : ''}</p> : <EvidenceForm item={item} profile={phase.deliveryProfile} roles={roles} cells={mandays} activities={activities} />}
                         </td>
                         <td className="px-2 py-2 text-xs text-muted">
@@ -289,7 +294,10 @@ export function StepItems({
                             </form>
                           )}
                         </td>
-                      </tr>
+                      </tr><tr><td colSpan={6 + costedRoles.length} className="px-3 pb-3">
+                          <ItemAssessment item={item} detail={{ activities: detail.activities, roles, matrixCells: detail.matrixCells, effectiveMultiplier: detail.effectiveMultiplier, mandays, scopeDimensions: detail.scopeDimensions, projectRoles: detail.projectRoles }} profile={phase.deliveryProfile} readOnly={readOnly} criteria={(['L', 'M', 'H'] as const).map(level => { const code = activityById.get(item.activityId ?? 0)?.code; if (!code) return ''; const source = criteriaSnapshot(code).source; return [...new Set([source?.[{ L: 'low', M: 'medium', H: 'high' }[level] as 'low' | 'medium' | 'high'], criterionText(code, level)].filter(Boolean))].join('\n\n') })} />
+
+                      </td></tr></Fragment>
                     )
                   })}
 

@@ -1,0 +1,251 @@
+[
+  {
+    "no": 1,
+    "name": "Organization",
+    "thai": "ผู้ใช้งาน หน่วยงาน และพื้นที่",
+    "ask": [
+      "ใครเป็นผู้ใช้/ผู้อนุมัติ และใครเป็นเจ้าของข้อมูล?",
+      "มีหน่วยงาน ประเทศ หรือพื้นที่ใดบ้าง?",
+      "ใช้ process ร่วมกันหรือมีข้อยกเว้นต่างกัน?"
+    ],
+    "collect": "กลุ่มผู้ใช้, stakeholder, พื้นที่, ประเทศ, rollout wave และเจ้าของขอบเขต",
+    "activities": [
+      "10.1",
+      "18.1",
+      "18.2"
+    ],
+    "extra": "Rollout / Coordination ที่เกินขอบเขตเดิมลง effort ตามบทบาท",
+    "qty": "จำนวนพื้นที่ไม่คูณ MD ของระบบทั้งหมดทันที; เพิ่มจำนวน session, รอบ rollout หรือรายการงานเฉพาะที่ต้องทำซ้ำจริง",
+    "level": "หลายพื้นที่ที่ใช้ process เดียวอาจเพิ่ม Qty โดยไม่เพิ่มระดับ; process/role ที่ต่างกันเป็นปัจจัยของ Activity ที่ได้รับผลกระทบ",
+    "output": "รายชื่อ stakeholder + rollout scope + ผู้รับผิดชอบแต่ละรายการ",
+    "overlap": "ใช้ process กลางร่วมกันคิดพัฒนาครั้งเดียว แล้วแยก effort rollout/อบรมเฉพาะพื้นที่"
+  },
+  {
+    "no": 2,
+    "name": "Module",
+    "thai": "โมดูลและฟังก์ชัน",
+    "ask": [
+      "มี Module/Function และหน้าจอใดในขอบเขต?",
+      "พัฒนาใหม่ แก้ของเดิม หรือ reuse ส่วนไหน?",
+      "มี shared component/data model หรือไม่?"
+    ],
+    "collect": "module list, function list, screen list, new/enhancement และ reuse",
+    "activities": [
+      "1.1",
+      "1.2",
+      "1.3",
+      "10.1",
+      "10.2",
+      "10.3"
+    ],
+    "extra": "SAP Configuration แยกใช้ SAP profile และลง MD ตามบทบาท",
+    "qty": "นับหน้าจอหรือโมดูลตามหน่วยของ Activity; Module หนึ่งมีหลายหน้าจอ ไม่ใช้จำนวน Module คูณซ้ำทุก Function",
+    "level": "ใช้ pattern เดิม = ตรวจ Low; business logic ใหม่หรือ shared model กระทบหลายส่วน = ตรวจ Medium/High ตามปัจจัย",
+    "output": "รายการงานที่มี module/function/screen ID และ deliverable ชัดเจน",
+    "overlap": "shared component สร้างครั้งเดียว; อย่าลง MD เต็มซ้ำในทุกหน้าจอที่เรียกใช้"
+  },
+  {
+    "no": 3,
+    "name": "Business Process",
+    "thai": "กระบวนการและ Scenario",
+    "ask": [
+      "กระบวนการเริ่มและจบที่ใด?",
+      "happy path, exception, rework และ business rule มีอะไรบ้าง?",
+      "Scenario ใดต้องทดสอบและใครยืนยันผล?"
+    ],
+    "collect": "process map, scenario, rule, exception และ acceptance criteria",
+    "activities": [
+      "10.1",
+      "10.2",
+      "11.1",
+      "11.3",
+      "11.4"
+    ],
+    "extra": "ใช้ process เป็นบริบทให้ CRUD, Workflow และ Interface เลือกระดับ",
+    "qty": "นับโมดูลตาม Matrix; scenario/test case เป็นปัจจัยขอบเขต ไม่คูณเป็นโมดูลเพิ่มทุก scenario",
+    "level": "exception/role/state และ dependency ข้ามระบบเพิ่มความซับซ้อนของ design/test",
+    "output": "scenario + rule + acceptance criteria เชื่อมกับ work item และ test",
+    "overlap": "Business Process และ Workflow อาจอธิบายงานเดียวกัน ใช้ work item ID เดียว ไม่คิดค่าพัฒนาเพิ่มจากการมีสองมิติ"
+  },
+  {
+    "no": 4,
+    "name": "Hardware / Software / Infrastructure",
+    "thai": "Environment, License และ Infrastructure",
+    "ask": [
+      "ต้องมี Dev/SIT/UAT/Production อะไรบ้าง?",
+      "ใช้ platform/runtime/database/network ใด?",
+      "มี license, pipeline, scan gate หรือ environment ที่ต้องตั้งใหม่หรือไม่?"
+    ],
+    "collect": "environment/service list, stack, dependency, network request และ license requirement",
+    "activities": [
+      "8",
+      "9",
+      "16.1",
+      "16.2",
+      "16.3",
+      "16.4",
+      "17.1",
+      "17.2",
+      "17.3",
+      "17.4"
+    ],
+    "extra": "Hardware/Software/License เป็นค่าใช้จ่ายแยกจาก MD; นับแรงงานจัดหา/ติดตั้ง/ตั้งค่าเมื่อมีงานจริง",
+    "qty": "นับต่อ environment, stack, database หรือ pipeline ตาม Activity; shared environment ตั้งครั้งเดียว",
+    "level": "ใช้ template เดิมต่างจาก upgrade ที่มี breaking change, cutover หรือหลาย dependency",
+    "output": "environment plan + owner + setup/upgrade work items + non-labor cost",
+    "overlap": "ค่า license ไม่แปลงเป็น MD; Dev setup กับ Production setup ต้องระบุ deliverable เพื่อไม่ซ้ำกัน"
+  },
+  {
+    "no": 5,
+    "name": "Workflow",
+    "thai": "ขั้นตอนการทำงานและ Approval",
+    "ask": [
+      "มี workflow กี่กระบวนการ และ approval กี่ขั้น?",
+      "Sequential/Parallel, branch และผู้อนุมัติตามเงื่อนไขเป็นอย่างไร?",
+      "มี reject/rework, notification หรือการเปลี่ยนสถานะข้ามระบบหรือไม่?"
+    ],
+    "collect": "workflow ID, state/transition, approval, branch, role และ notification event",
+    "activities": [
+      "1.4",
+      "1.5",
+      "4"
+    ],
+    "extra": "เลือก 1.4 สำหรับ logic flow; 1.5 สำหรับ notification ที่แยกขอบเขต; 4 สำหรับ background job ที่มีงานเฉพาะ",
+    "qty": "หนึ่ง workflow ที่มีหลายขั้นยังเป็นหนึ่งหน่วย; event ที่ต่างจริงนับ notification ตามหน่วยของ Matrix",
+    "level": "flow เดิมตรงไปตรงมา / เพิ่ม business rule / conditional+parallel หรือ multi-state ตามร่าง L/M/H",
+    "output": "workflow specification + Qty + level พร้อมเหตุผลและ scope owner",
+    "overlap": "ถ้า CRUD รวม workflow logic แล้ว ต้องตัดส่วนนี้ออกก่อนคิด 1.4 แยก; scheduler เดียวไม่คิดซ้ำกับ notification"
+  },
+  {
+    "no": 6,
+    "name": "Report & Form",
+    "thai": "Report, Form และ Query",
+    "ask": [
+      "รายงาน/แบบฟอร์ม/แดชบอร์ดที่แตกต่างจริงมีอะไรบ้าง?",
+      "filter, query, KPI, chart, source และ layout เป็นอย่างไร?",
+      "มี export, print, attachment หรือข้อมูลปริมาณมากหรือไม่?"
+    ],
+    "collect": "report/form/dashboard ID, data source, query, layout, export template และ performance requirement",
+    "activities": [
+      "2",
+      "3",
+      "1.6",
+      "13.1",
+      "13.2",
+      "16.5"
+    ],
+    "extra": "Performance Tuning เสนอแยกเมื่อมี bottleneck และผลวัดเป็น deliverable ของตัวเอง",
+    "qty": "นับต่อรายงาน/dashboard/แบบฟอร์ม/รูปแบบไฟล์ตาม Activity; จำนวน chart ไม่ใช่จำนวน dashboard",
+    "level": "query, aggregation, layout, preparation และ freshness เป็นปัจจัย; ไม่จัด PDF/PPT เป็น High จากนามสกุล",
+    "output": "report/form catalog + mockup/layout + data contract + acceptance",
+    "overlap": "Export ของ report เดียว ถ้ารวมในค่า report แล้วไม่คิดเต็มซ้ำอีก; Query เป็นงานส่วนหนึ่งเว้นมีขอบเขตเตรียมข้อมูลแยก"
+  },
+  {
+    "no": 7,
+    "name": "Interface",
+    "thai": "ระบบเชื่อมต่อ ทิศทาง และจำนวน",
+    "ask": [
+      "เชื่อมระบบใดและใครรับผิดชอบฝั่งต้นทาง/ปลายทาง?",
+      "one-way/two-way, endpoint/action และ mapping เป็นอย่างไร?",
+      "มี queue, retry, resend, authentication, transaction หรือ reconciliation หรือไม่?"
+    ],
+    "collect": "interface ID, source/target, contract, direction, endpoint, mapping และ error handling",
+    "activities": [
+      "5.1",
+      "5.2",
+      "5.3",
+      "4"
+    ],
+    "extra": "เชื่อม identity provider ใช้ 12.1 เมื่อเป็นงาน authentication โดยเฉพาะ",
+    "qty": "นับ interface ตามสัญญาข้อมูล/ขอบเขตธุรกิจที่ตกลง ไม่แยกทุก HTTP call หรือ retry เป็นคนละหน่วย",
+    "level": "mapping ตรง / validation+transform / async+หลายระบบ+consistency เป็นปัจจัยหลัก",
+    "output": "interface catalog + responsibility + Qty + level + test/reconciliation scope",
+    "overlap": "API ที่ใช้ใน workflow ไม่คิดสองครั้งเพราะปรากฏทั้งมิติ Workflow และ Interface"
+  },
+  {
+    "no": 8,
+    "name": "Data Conversion",
+    "thai": "ย้ายข้อมูลและ Data Cleansing",
+    "ask": [
+      "ย้ายจากไหนไปไหน กี่ตาราง/entity และกี่ record?",
+      "mapping, reference และคุณภาพข้อมูลเป็นอย่างไร?",
+      "ต้อง mock run, reconcile, sign-off, downtime หรือ rollback หรือไม่?"
+    ],
+    "collect": "source/target, table/entity, record volume, mapping, cleansing rule, mock/cutover plan",
+    "activities": [
+      "6",
+      "16.3",
+      "16.4"
+    ],
+    "extra": "Migration profile ลง MD ตามบทบาท; volume ไม่แปลงเป็น Qty ต่อตารางโดยตรง",
+    "qty": "6 นับต่อตารางตาม Matrix; extract/transform/load ของตารางเดียวไม่ใช่สามตาราง",
+    "level": "schema ใกล้เคียง / cleansing+dependency / multi-source+cutover+reconciliation ตามขอบเขต",
+    "output": "migration inventory + mapping + cleansing + validation/sign-off criteria",
+    "overlap": "แยกงานย้าย database/platform ออกจากย้าย business data และระบุส่วนที่รวมกันไว้"
+  },
+  {
+    "no": 9,
+    "name": "Technical Enhancement",
+    "thai": "พัฒนาเพิ่มจาก Standard Function",
+    "ask": [
+      "ส่วนไหน standard/config/reuse และส่วนไหน custom development?",
+      "มี code/library/runtime upgrade, security remediation หรือ bottleneck หรือไม่?",
+      "ต้องทำ prototype, benchmark หรือ load test เพิ่มหรือไม่?"
+    ],
+    "collect": "gap list, custom component, affected layers, dependency และ target quality/performance",
+    "activities": [
+      "1.1",
+      "1.2",
+      "1.3",
+      "7",
+      "16.1",
+      "16.2"
+    ],
+    "extra": "Performance Tuning เสนอ 4/8/15 MD; Load Test เสนอ 3/6/10 MD ต่อหน่วยที่กำหนด",
+    "qty": "แตก deliverable ที่ต่างจริงเป็น Activity; จำนวน findings/จุดแก้ไม่เท่ากับ Qty ต่อโครงการ",
+    "level": "pattern เดิม / custom rule / architecture หรือหลาย dependency ตามผลวิเคราะห์",
+    "output": "fit-gap + solution scope + custom work item + benchmark/regression plan",
+    "overlap": "ไม่สร้างรายการ Technical Enhancement ทับ CRUD เดิม; Tuning และ Load Test แยกเฉพาะ deliverable ที่ไม่รวมกัน"
+  },
+  {
+    "no": 10,
+    "name": "Authorization",
+    "thai": "สิทธิ์ระดับ Menu, Record, Field และ Role",
+    "ask": [
+      "มี role อะไรบ้าง และสิทธิ์ระดับ menu/button/record/field เป็นอย่างไร?",
+      "มีหลาย role, inheritance, ownership หรือข้อยกเว้นตามบริบทหรือไม่?",
+      "ต้องย้าย user/role, SSO, audit หรือ session policy เพิ่มหรือไม่?"
+    ],
+    "collect": "permission matrix, role, menu/action/record/field, affected screens และ migration",
+    "activities": [
+      "12.1",
+      "12.2",
+      "12.3",
+      "12.4"
+    ],
+    "extra": "record/field-level permission ต้องระบุเป็นปัจจัยเพิ่ม; แยก authorization จาก login",
+    "qty": "12.2–12.4 ตาม Matrix เป็นต่อโครงการ; จำนวน role/หน้าจอเป็น scope ประกอบ ไม่คูณเป็น Qty ทันที",
+    "level": "สิทธิ์ตาม pattern เดิม / เพิ่ม action+multi-role / data-context+hierarchy+model change",
+    "output": "permission matrix + security acceptance + scope แยก SSO/permission/audit/session",
+    "overlap": "permission check ใน CRUD ที่ประเมินไว้แล้วไม่คิดเต็มซ้ำใน 12.2; user migration อยู่ใน Data Conversion เมื่อมีงานแยก"
+  },
+  {
+    "no": 11,
+    "name": "Training / Change Management",
+    "thai": "อบรม เอกสาร และการเปลี่ยนแปลง",
+    "ask": [
+      "มี TTT/EUT/technical training กี่ session กี่ชั่วโมง และกี่กลุ่ม?",
+      "ต้องทำคู่มือใหม่ ปรับเอกสาร หรือใช้ material เดิม?",
+      "ต้อง communication, readiness, adoption support หรือ change impact assessment หรือไม่?"
+    ],
+    "collect": "audience, session/duration, material, delivery mode, change plan และ acceptance",
+    "activities": [
+      "15.1"
+    ],
+    "extra": "Training เสนอ 1/2/3 MD ต่อ session 4 ชั่วโมง; Change Management เกิน training ลง MD ตามบทบาทและ work package ที่ตกลง",
+    "qty": "จำนวน session เพิ่ม Qty; session ซ้ำใช้ material เดิมไม่คิด preparation เต็มซ้ำ",
+    "level": "สอนเนื้อหาเดิม / ปรับตาม role+workshop / technical handover+แบบฝึกเฉพาะ",
+    "output": "training plan + material work items + change-management work packages",
+    "overlap": "15.1 ทำคู่มือแยกจากจัดสอน; communication/adoption ไม่ถูกเหมารวมใน MD Training โดยไม่มี scope"
+  }
+]

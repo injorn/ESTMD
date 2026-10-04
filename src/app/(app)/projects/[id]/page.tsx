@@ -18,6 +18,7 @@ import { StepAnswers } from './step-answers'
 import { StepItems } from './step-items'
 import { StepTeam } from './step-team'
 import { StepSummary } from './step-summary'
+import { ScopeForm } from './scope-form'
 
 /** Active stacks, plus the project's own stack when that one is retired. */
 async function stackOptions(detail: ProjectDetail) {
@@ -95,12 +96,13 @@ export default async function ProjectWizardPage({
       ) : null}
 
       {step === 2 ? (
+        <div className="space-y-4"><ScopeForm detail={detail} readOnly={readOnly} />
         <StepAnswers
           project={detail.project}
           questionnaire={detail.survey}
           quantities={Object.fromEntries(detail.activityQty)}
           readOnly={readOnly}
-        />
+        /></div>
       ) : null}
 
       {step === 3 ? (
